@@ -10,7 +10,7 @@ PROTEINS = ["Beef", "Chicken", "Fish", "Pork", "Vegan", "Vegetarian", "Other"]
 
 @recipes_bp.route("/")
 def index():
-    return redirect(url_for("recipes.browse"))
+    return redirect("/recipes/")
 
 
 @recipes_bp.route("/recipes/")
