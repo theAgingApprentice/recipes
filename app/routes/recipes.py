@@ -9,11 +9,6 @@ PROTEINS = ["Beef", "Chicken", "Fish", "Pork", "Vegan", "Vegetarian", "Other"]
 
 
 @recipes_bp.route("/")
-def index():
-    return redirect("/recipes/")
-
-
-@recipes_bp.route("/recipes/")
 def browse():
     cuisine = request.args.get("cuisine", "")
     protein = request.args.get("protein", "")
@@ -35,13 +30,13 @@ def browse():
     )
 
 
-@recipes_bp.route("/recipes/<int:recipe_id>")
+@recipes_bp.route("/<int:recipe_id>")
 def detail(recipe_id):
     r = Recipe.query.get_or_404(recipe_id)
     return render_template("recipes/detail.html", recipe=r)
 
 
-@recipes_bp.route("/recipes/add", methods=["GET", "POST"])
+@recipes_bp.route("/add", methods=["GET", "POST"])
 def add():
     if request.method == "POST":
         r = _recipe_from_form(Recipe())
@@ -54,12 +49,11 @@ def add():
     return render_template("recipes/form.html", recipe=None, cuisines=CUISINES, proteins=PROTEINS)
 
 
-@recipes_bp.route("/recipes/<int:recipe_id>/edit", methods=["GET", "POST"])
+@recipes_bp.route("/<int:recipe_id>/edit", methods=["GET", "POST"])
 def edit(recipe_id):
     r = Recipe.query.get_or_404(recipe_id)
     if request.method == "POST":
         r = _recipe_from_form(r)
-        # Replace ingredients and steps entirely
         for ing in list(r.ingredients):
             db.session.delete(ing)
         for step in list(r.steps):
@@ -72,7 +66,7 @@ def edit(recipe_id):
     return render_template("recipes/form.html", recipe=r, cuisines=CUISINES, proteins=PROTEINS)
 
 
-@recipes_bp.route("/recipes/<int:recipe_id>/delete", methods=["POST"])
+@recipes_bp.route("/<int:recipe_id>/delete", methods=["POST"])
 def delete(recipe_id):
     r = Recipe.query.get_or_404(recipe_id)
     db.session.delete(r)
@@ -128,7 +122,6 @@ def api_detail(recipe_id):
 
 
 # --- Helpers ---
-
 
 def _recipe_from_form(r):
     r.name = request.form["name"].strip()
