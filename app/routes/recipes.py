@@ -45,7 +45,7 @@ def add():
         _save_ingredients(r)
         _save_steps(r)
         db.session.commit()
-        return redirect(url_for("recipes.detail", recipe_id=r.id))
+        return redirect(f"/recipes/{r.id}")
     return render_template("recipes/form.html", recipe=None, cuisines=CUISINES, proteins=PROTEINS)
 
 
@@ -62,7 +62,7 @@ def edit(recipe_id):
         _save_ingredients(r)
         _save_steps(r)
         db.session.commit()
-        return redirect(url_for("recipes.detail", recipe_id=r.id))
+        return redirect(f"/recipes/{r.id}")
     return render_template("recipes/form.html", recipe=r, cuisines=CUISINES, proteins=PROTEINS)
 
 

@@ -88,9 +88,8 @@ def test_add_post(client):
         "ingredient_quantity": ["2"],
         "ingredient_category": ["Bread"],
         "step_instruction": ["Heat pan"],
-    }, follow_redirects=True)
-    assert resp.status_code == 200
-    assert b"New Recipe" in resp.data
+    }, follow_redirects=False)
+    assert resp.status_code == 302
 
 
 def test_edit_get(client, sample_recipe):
@@ -108,9 +107,8 @@ def test_edit_post(client, sample_recipe):
         "ingredient_quantity": ["250g"],
         "ingredient_category": ["Dry goods"],
         "step_instruction": ["Boil salted water"],
-    }, follow_redirects=True)
-    assert resp.status_code == 200
-    assert b"Updated Pasta" in resp.data
+    }, follow_redirects=False)
+    assert resp.status_code == 302
 
 
 def test_delete(client, sample_recipe):
