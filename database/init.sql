@@ -3,6 +3,22 @@ CREATE DATABASE IF NOT EXISTS `recipes_db`
   COLLATE utf8mb4_unicode_ci;
 USE `recipes_db`;
 
+CREATE TABLE IF NOT EXISTS cuisines (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS proteins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO cuisines (name) VALUES
+  ('American'), ('Asian'), ('Italian'), ('Mediterranean'), ('Mexican'), ('Other');
+
+INSERT INTO proteins (name) VALUES
+  ('Beef'), ('Chicken'), ('Fish'), ('Pork'), ('Vegan'), ('Vegetarian'), ('Other');
+
 CREATE TABLE IF NOT EXISTS recipes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -54,7 +70,8 @@ CREATE TABLE IF NOT EXISTS meal_plans (
 CREATE TABLE IF NOT EXISTS meal_plan_entries (
   id INT AUTO_INCREMENT PRIMARY KEY,
   meal_plan_id INT NOT NULL,
-  day_of_week TINYINT NOT NULL,
+  day_of_week TINYINT NOT NULL COMMENT '0=Mon, 6=Sun',
+  meal_slot ENUM('breakfast','lunch','dinner','snack') NOT NULL DEFAULT 'dinner',
   recipe_id INT NOT NULL,
   FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
   FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE

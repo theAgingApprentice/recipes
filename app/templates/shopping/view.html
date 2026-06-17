@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Shopping List{% endblock %}
+{% block content %}
+
+  Shopping List
+  
+    [↓ Export .txt](/shopping-list/export?week={{ week_start }})
+    [← Meal Plan](/meal-plan/?week={{ week_start }})
+  
+
+Week of {{ week_start.strftime('%b %d, %Y') }}
+
+{% if not plan or not items %}
+No meal plan for this week yet. [Build one.](/meal-plan/?week={{ week_start }})
+
+{% else %}
+
+{% set ns = namespace(current_cat=None) %}
+{% for cat, name, qty in items %}
+  {% if cat != ns.current_cat %}
+    {% if ns.current_cat is not none %}
+
+{% endif %}
+    {% set ns.current_cat = cat %}
+    
+    {{ cat }}
+    
+
+  {% endif %}
+  - {% if qty %}**{{ qty }}** {% endif %}{{ name }}
+
+{% endfor %}
+{% if ns.current_cat is not none %}
+
+{% endif %}
+
+{% endif %}
+{% endblock %}

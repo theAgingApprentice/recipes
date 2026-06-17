@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.name }}{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+  <h1>{{ recipe.name }}</h1>
+  <div class="actions">
+    <a href="/recipes/{{ recipe.id }}/edit" class="btn btn-secondary">Edit</a>
+    <form method="post" action="/recipes/{{ recipe.id }}/delete"
+          onsubmit="return confirm('Delete {{ recipe.name }}?')">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+    {% if recipe.cuisine %}<span class="tag">{{ recipe.cuisine }}</span>{% endif %}
+    {% if recipe.protein %}<span class="tag">{{ recipe.protein }}</span>{% endif %}
+    {% if recipe.prep_time_mins %}<span class="tag">Prep {{ recipe.prep_time_mins }} min</span>{% endif %}
+    {% if recipe.cook_time_mins %}<span class="tag">Cook {{ recipe.cook_time_mins }} min</span>{% endif %}
+    {% if recipe.wishlist %}<span class="badge">★ Wishlist</span>{% endif %}
+  </div>
+  {% if recipe.source_name or recipe.source_url %}
+  <p style="font-size:0.88rem; color:#555; margin-bottom:0.5rem;">
+    Source:
+    {% if recipe.source_url %}
+      <a href="{{ recipe.source_url }}" target="_blank">{{ recipe.source_name or recipe.source_url }}</a>
+    {% else %}
+      {{ recipe.source_name }}
+    {% endif %}
+  </p>
+  {% endif %}
+  {% if recipe.notes %}<p style="color:#444;">{{ recipe.notes }}</p>{% endif %}
+</div>
+
+{% if recipe.ingredients %}
+<div class="card">
+  <h2>Ingredients</h2>
+  <table>
+    <thead><tr><th>Quantity</th><th>Ingredient</th><th>Category</th></tr></thead>
+    <tbody>
+      {% for i in recipe.ingredients %}
+      <tr>
+        <td>{{ i.quantity or '' }}</td>
+        <td>{{ i.name }}</td>
+        <td>{{ i.category or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if recipe.steps %}
+<div class="card">
+  <h2>Steps</h2>
+  <ol style="padding-left:1.25rem; line-height:1.8;">
+    {% for s in recipe.steps %}
+    <li style="margin-bottom:0.4rem;">{{ s.instruction }}</li>
+    {% endfor %}
+  </ol>
+</div>
+{% endif %}
+
+{% if recipe.cook_logs %}
+<div class="card">
+  <h2>Cook Log</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Rating</th><th>Notes</th></tr></thead>
+    <tbody>
+      {% for c in recipe.cook_logs %}
+      <tr>
+        <td>{{ c.cooked_on }}</td>
+        <td>{{ '★' * c.rating if c.rating else '—' }}</td>
+        <td>{{ c.notes or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<a href="/recipes/" class="btn btn-secondary">← Back to recipes</a>
+{% endblock %}

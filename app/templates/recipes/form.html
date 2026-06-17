@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if recipe else 'Add' }} Recipe{% endblock %}
+{% block content %}
+<h1>{{ 'Edit' if recipe else 'Add' }} Recipe</h1>
+
+<form method="post" class="card">
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Name *</label>
+      <input type="text" name="name" required value="{{ recipe.name if recipe else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Source name</label>
+      <input type="text" name="source_name" value="{{ recipe.source_name if recipe else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Source URL</label>
+      <input type="url" name="source_url" value="{{ recipe.source_url if recipe else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Cuisine</label>
+      <select name="cuisine">
+        <option value="">— select —</option>
+        {% for c in cuisines %}
+        <option value="{{ c }}" {% if recipe and recipe.cuisine == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Protein</label>
+      <select name="protein">
+        <option value="">— select —</option>
+        {% for p in proteins %}
+        <option value="{{ p }}" {% if recipe and recipe.protein == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Prep time (mins)</label>
+      <input type="number" name="prep_time_mins" min="0"
+             value="{{ recipe.prep_time_mins if recipe and recipe.prep_time_mins else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Cook time (mins)</label>
+      <input type="number" name="cook_time_mins" min="0"
+             value="{{ recipe.cook_time_mins if recipe and recipe.cook_time_mins else '' }}">
+    </div>
+    <div class="form-group full">
+      <label>Notes</label>
+      <textarea name="notes" rows="3">{{ recipe.notes if recipe else '' }}</textarea>
+    </div>
+    <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+      <input type="checkbox" name="wishlist" value="1" id="wishlist"
+             {% if recipe and recipe.wishlist %}checked{% endif %}>
+      <label for="wishlist" style="font-weight:normal;">Add to wishlist</label>
+    </div>
+  </div>
+
+  <hr style="margin:1rem 0; border-color:#e5e7eb;">
+  <h2>Ingredients</h2>
+  <table id="ingredients-table">
+    <thead><tr><th>Quantity</th><th>Name</th><th>Category</th><th></th></tr></thead>
+    <tbody>
+      {% if recipe and recipe.ingredients %}
+        {% for i in recipe.ingredients %}
+        <tr>
+          <td><input type="text" name="ingredient_quantity" value="{{ i.quantity or '' }}"></td>
+          <td><input type="text" name="ingredient_name" value="{{ i.name }}"></td>
+          <td><input type="text" name="ingredient_category" value="{{ i.category or '' }}"></td>
+          <td><button type="button" onclick="this.closest('tr').remove()" class="btn btn-danger btn-sm">✕</button></td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td><input type="text" name="ingredient_quantity"></td>
+          <td><input type="text" name="ingredient_name"></td>
+          <td><input type="text" name="ingredient_category"></td>
+          <td><button type="button" onclick="this.closest('tr').remove()" class="btn btn-danger btn-sm">✕</button></td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <button type="button" class="btn btn-secondary btn-sm" style="margin-top:0.5rem;"
+    onclick="addIngredientRow()">+ Add ingredient</button>
+
+  <hr style="margin:1rem 0; border-color:#e5e7eb;">
+  <h2>Steps</h2>
+  <div id="steps-list">
+    {% if recipe and recipe.steps %}
+      {% for s in recipe.steps %}
+      <div class="actions" style="margin-bottom:0.5rem;">
+        <span style="min-width:1.5rem; color:#888;">{{ s.step_number }}.</span>
+        <textarea name="step_instruction" rows="2" style="flex:1;">{{ s.instruction }}</textarea>
+        <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger btn-sm">✕</button>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="actions" style="margin-bottom:0.5rem;">
+        <span style="min-width:1.5rem; color:#888;">1.</span>
+        <textarea name="step_instruction" rows="2" style="flex:1;"></textarea>
+        <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger btn-sm">✕</button>
+      </div>
+    {% endif %}
+  </div>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="addStepRow()">+ Add step</button>
+
+  <hr style="margin:1rem 0; border-color:#e5e7eb;">
+  <div class="actions">
+    <button type="submit" class="btn btn-primary">Save Recipe</button>
+    <a href="{{ '/recipes/' ~ recipe.id if recipe else '/recipes/' }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+function addIngredientRow() {
+  const tbody = document.querySelector('#ingredients-table tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="ingredient_quantity"></td>
+    <td><input type="text" name="ingredient_name"></td>
+    <td><input type="text" name="ingredient_category"></td>
+    <td><button type="button" onclick="this.closest('tr').remove()" class="btn btn-danger btn-sm">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function addStepRow() {
+  const list = document.getElementById('steps-list');
+  const n = list.querySelectorAll('div').length + 1;
+  const div = document.createElement('div');
+  div.className = 'actions';
+  div.style.marginBottom = '0.5rem';
+  div.innerHTML = `
+    <span style="min-width:1.5rem;color:#888;">${n}.</span>
+    <textarea name="step_instruction" rows="2" style="flex:1;"></textarea>
+    <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger btn-sm">✕</button>`;
+  list.appendChild(div);
+}
+</script>
+{% endblock %}
