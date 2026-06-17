@@ -3,6 +3,7 @@ from app import create_app
 from config.database import db as _db
 from models.recipe import Recipe, Ingredient, Step
 
+
 @pytest.fixture
 def app():
     application = create_app()
@@ -14,9 +15,11 @@ def app():
     with application.app_context():
         _db.drop_all()
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def sample_recipe(app):
@@ -31,42 +34,50 @@ def sample_recipe(app):
         _db.session.commit()
         return r.id
 
+
 def test_browse_empty(client):
-    resp = client.get("/recipes/")
+    resp = client.get("/")
     assert resp.status_code == 200
+
 
 def test_browse_with_recipe(client, sample_recipe):
-    resp = client.get("/recipes/")
+    resp = client.get("/")
     assert resp.status_code == 200
     assert b"Test Pasta" in resp.data
+
 
 def test_browse_filter_cuisine(client, sample_recipe):
-    resp = client.get("/recipes/?cuisine=Italian")
+    resp = client.get("/?cuisine=Italian")
     assert resp.status_code == 200
     assert b"Test Pasta" in resp.data
 
+
 def test_browse_filter_cuisine_no_match(client, sample_recipe):
-    resp = client.get("/recipes/?cuisine=Mexican")
+    resp = client.get("/?cuisine=Mexican")
     assert resp.status_code == 200
     assert b"Test Pasta" not in resp.data
 
+
 def test_detail(client, sample_recipe):
-    resp = client.get(f"/recipes/{sample_recipe}")
+    resp = client.get(f"/{sample_recipe}")
     assert resp.status_code == 200
     assert b"Test Pasta" in resp.data
     assert b"Pasta" in resp.data
     assert b"Boil water" in resp.data
 
+
 def test_detail_not_found(client):
-    resp = client.get("/recipes/99999")
+    resp = client.get("/99999")
     assert resp.status_code == 404
 
+
 def test_add_get(client):
-    resp = client.get("/recipes/add")
+    resp = client.get("/add")
     assert resp.status_code == 200
 
+
 def test_add_post(client):
-    resp = client.post("/recipes/add", data={
+    resp = client.post("/add", data={
         "name": "New Recipe",
         "cuisine": "Mexican",
         "protein": "Beef",
@@ -81,13 +92,15 @@ def test_add_post(client):
     assert resp.status_code == 200
     assert b"New Recipe" in resp.data
 
+
 def test_edit_get(client, sample_recipe):
-    resp = client.get(f"/recipes/{sample_recipe}/edit")
+    resp = client.get(f"/{sample_recipe}/edit")
     assert resp.status_code == 200
     assert b"Test Pasta" in resp.data
 
+
 def test_edit_post(client, sample_recipe):
-    resp = client.post(f"/recipes/{sample_recipe}/edit", data={
+    resp = client.post(f"/{sample_recipe}/edit", data={
         "name": "Updated Pasta",
         "cuisine": "Italian",
         "protein": "Chicken",
@@ -99,10 +112,12 @@ def test_edit_post(client, sample_recipe):
     assert resp.status_code == 200
     assert b"Updated Pasta" in resp.data
 
+
 def test_delete(client, sample_recipe):
-    resp = client.post(f"/recipes/{sample_recipe}/delete", follow_redirects=True)
+    resp = client.post(f"/{sample_recipe}/delete", follow_redirects=True)
     assert resp.status_code == 200
     assert b"Test Pasta" not in resp.data
+
 
 def test_api_list(client, sample_recipe):
     resp = client.get("/api/recipes")
@@ -110,6 +125,7 @@ def test_api_list(client, sample_recipe):
     data = resp.get_json()
     assert isinstance(data, list)
     assert any(r["name"] == "Test Pasta" for r in data)
+
 
 def test_api_detail(client, sample_recipe):
     resp = client.get(f"/api/recipes/{sample_recipe}")
