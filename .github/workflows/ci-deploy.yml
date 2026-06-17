@@ -34,16 +34,14 @@ jobs:
 
       - name: Build and restart container
         run: |
-          # TEMPLATE: replace recipes with your actual service name
           docker compose build --no-cache
-          docker compose up -d --no-deps recipes
+          docker compose up -d --no-deps recipes-app
 
       - name: Health check
         run: |
           sleep 5
-          # TEMPLATE: replace /recipes/health with your actual health endpoint
-          curl -sf https://mitchellnet.local/recipes/health \
+          curl -sf https://mitchellnet.local/recipes/api/health \
             -H "X-API-Key: ${API_KEY}" || \
-            (docker compose logs recipes --tail=50 && exit 1)
+            (docker compose logs recipes-app --tail=50 && exit 1)
         env:
           API_KEY: ${{ secrets.API_KEY }}

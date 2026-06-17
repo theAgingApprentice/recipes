@@ -1,16 +1,61 @@
--- TEMPLATE: Replace this with your actual schema.
--- This file runs automatically when the MariaDB container first starts.
--- It does NOT re-run if the volume already exists.
-
 CREATE DATABASE IF NOT EXISTS `recipes_db`
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
-
 USE `recipes_db`;
 
--- Example table — replace with your actual schema:
--- CREATE TABLE IF NOT EXISTS example (
---   id INT AUTO_INCREMENT PRIMARY KEY,
---   name VARCHAR(255) NOT NULL,
---   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+CREATE TABLE IF NOT EXISTS recipes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  source_name VARCHAR(255),
+  source_url TEXT,
+  cuisine VARCHAR(100),
+  protein VARCHAR(100),
+  prep_time_mins INT,
+  cook_time_mins INT,
+  notes TEXT,
+  wishlist BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ingredients (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipe_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  quantity VARCHAR(100),
+  category VARCHAR(100),
+  sort_order INT NOT NULL DEFAULT 0,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS steps (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipe_id INT NOT NULL,
+  step_number INT NOT NULL,
+  instruction TEXT NOT NULL,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS cook_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipe_id INT NOT NULL,
+  cooked_on DATE NOT NULL,
+  rating TINYINT,
+  notes TEXT,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS meal_plans (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  week_start DATE NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS meal_plan_entries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  meal_plan_id INT NOT NULL,
+  day_of_week TINYINT NOT NULL,
+  recipe_id INT NOT NULL,
+  FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
