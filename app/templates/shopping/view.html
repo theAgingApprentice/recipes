@@ -1,38 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Shopping List{% endblock %}
 {% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <h1>Shopping List</h1>
+  <div class="actions">
+    <a href="/shopping-list/export?week={{ week_start }}" class="btn btn-secondary">↓ Export .txt</a>
+    <a href="/meal-plan/?week={{ week_start }}" class="btn btn-secondary">← Meal Plan</a>
+  </div>
+</div>
 
-  Shopping List
-  
-    [↓ Export .txt](/shopping-list/export?week={{ week_start }})
-    [← Meal Plan](/meal-plan/?week={{ week_start }})
-  
-
-Week of {{ week_start.strftime('%b %d, %Y') }}
+<p style="color:#555; margin-bottom:1rem;">Week of {{ week_start.strftime('%b %d, %Y') }}</p>
 
 {% if not plan or not items %}
-No meal plan for this week yet. [Build one.](/meal-plan/?week={{ week_start }})
-
+<div class="empty">No meal plan for this week yet. <a href="/meal-plan/?week={{ week_start }}">Build one.</a></div>
 {% else %}
 
 {% set ns = namespace(current_cat=None) %}
 {% for cat, name, qty in items %}
   {% if cat != ns.current_cat %}
-    {% if ns.current_cat is not none %}
-
-{% endif %}
+    {% if ns.current_cat is not none %}</ul></div>{% endif %}
     {% set ns.current_cat = cat %}
-    
-    {{ cat }}
-    
-
+    <div class="card" style="margin-bottom:0.5rem;">
+    <h2 style="margin-bottom:0.5rem;">{{ cat }}</h2>
+    <ul style="list-style:none; padding:0;">
   {% endif %}
-  - {% if qty %}**{{ qty }}** {% endif %}{{ name }}
-
+  <li style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; border-top:1px solid #f1f5f9;">
+    <input type="checkbox" style="width:auto;">
+    <span>{% if qty %}<strong>{{ qty }}</strong> {% endif %}{{ name }}</span>
+  </li>
 {% endfor %}
-{% if ns.current_cat is not none %}
-
-{% endif %}
+{% if ns.current_cat is not none %}</ul></div>{% endif %}
 
 {% endif %}
 {% endblock %}
