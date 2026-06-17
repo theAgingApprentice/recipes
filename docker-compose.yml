@@ -1,0 +1,37 @@
+services:
+  # TEMPLATE: replace recipes with your actual service name
+  recipes:
+    build: .
+    container_name: recipes
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - recipes-db
+    networks:
+      - mitchellnet
+      - recipes-internal
+
+  # TEMPLATE: replace recipes-db with your actual db container name
+  recipes-db:
+    image: mariadb:10.11
+    container_name: recipes-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - recipes-db-data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - recipes-internal
+
+volumes:
+  # TEMPLATE: replace recipes-db-data with your actual volume name
+  recipes-db-data:
+
+networks:
+  mitchellnet:
+    external: true
+  # TEMPLATE: replace recipes-internal with your actual internal network name
+  recipes-internal:
+    internal: true
