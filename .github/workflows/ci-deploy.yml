@@ -43,5 +43,5 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl -sf https://mitchellnet.local/recipes/api/health || \
+          curl -sfk https://mitchellnet.local/recipes/api/health || \
             (cd ~/services/recipes && docker compose logs recipes-app --tail=50 && exit 1)
