@@ -12,3 +12,5 @@ Accessible at `https://mitchellnet.local/recipes/` over the LAN.
 ## Development
 
 See `mitchellnet-infra/docs/` for service type reference, framework guide, and runbook.
+
+deploy trigger
