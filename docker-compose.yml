@@ -1,37 +1,42 @@
 services:
-  # TEMPLATE: replace recipes with your actual service name
-  recipes:
+  recipes-app:
     build: .
-    container_name: recipes
+    container_name: recipes-app
     restart: unless-stopped
     env_file:
       - .env
     depends_on:
-      - recipes-db
+      recipes-db:
+        condition: service_healthy
+    volumes:
+      - recipes_uploads:/app/uploads
     networks:
       - mitchellnet
       - recipes-internal
 
-  # TEMPLATE: replace recipes-db with your actual db container name
   recipes-db:
-    image: mariadb:10.11
+    image: mariadb:11
     container_name: recipes-db
     restart: unless-stopped
     env_file:
       - .env
     volumes:
-      - recipes-db-data:/var/lib/mysql
+      - recipes_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - recipes-internal
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  # TEMPLATE: replace recipes-db-data with your actual volume name
-  recipes-db-data:
+  recipes_data:
+  recipes_uploads:
 
 networks:
   mitchellnet:
     external: true
-  # TEMPLATE: replace recipes-internal with your actual internal network name
   recipes-internal:
     internal: true
