@@ -26,9 +26,9 @@ def create_app():
     from routes.meal_plan import meal_plan_bp
     from routes.shopping import shopping_bp
 
-    app.register_blueprint(recipes_bp)
-    app.register_blueprint(meal_plan_bp)
-    app.register_blueprint(shopping_bp)
+    app.register_blueprint(recipes_bp, url_prefix="/recipes")
+    app.register_blueprint(meal_plan_bp, url_prefix="/recipes")
+    app.register_blueprint(shopping_bp, url_prefix="/recipes")
 
     @app.route("/api/health")
     def health():
