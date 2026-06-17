@@ -1,46 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Meal Plan{% endblock %}
 {% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <h1>Meal Plan</h1>
+  <div class="actions">
+    <a href="/meal-plan/?week={{ prev_week }}" class="btn btn-secondary">← Prev</a>
+    <span style="font-size:0.95rem; color:#555;">Week of {{ week_start.strftime('%b %d, %Y') }}</span>
+    <a href="/meal-plan/?week={{ next_week }}" class="btn btn-secondary">Next →</a>
+  </div>
+</div>
 
-  Meal Plan
-  
-    [← Prev](/meal-plan/?week={{ prev_week }})
-    Week of {{ week_start.strftime('%b %d, %Y') }}
-    [Next →](/meal-plan/?week={{ next_week }})
-  
-
-  
-  
-    
-      
-        Slot
-        {% for day in days %}{{ day }}{% endfor %}
-        
-      
-      
+<form method="post" action="/meal-plan/save">
+  <input type="hidden" name="week_start" value="{{ week_start }}">
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:90px;">Slot</th>
+          {% for day in days %}<th>{{ day }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
         {% for slot in meal_slots %}
-        
-          {{ slot }}
+        <tr>
+          <td style="font-size:0.82rem; color:#666; text-transform:capitalize;">{{ slot }}</td>
           {% for day_idx in range(7) %}
-          
-            
-              —
+          <td>
+            <select name="entry_{{ day_idx }}_{{ slot }}" style="font-size:0.82rem;">
+              <option value="">—</option>
               {% for r in recipes %}
-              
+              <option value="{{ r.id }}"
+                {% if grid[day_idx][slot] and grid[day_idx][slot].recipe_id == r.id %}selected{% endif %}>
                 {{ r.name }}
-              
+              </option>
               {% endfor %}
-            
+            </select>
+          </td>
           {% endfor %}
-        
+        </tr>
         {% endfor %}
-      
-    
-  
-
-  
-    Save Plan
-    [→ Shopping List](/shopping-list/?week={{ week_start }})
-  
-
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:1rem;" class="actions">
+    <button type="submit" class="btn btn-primary">Save Plan</button>
+    <a href="/shopping-list/?week={{ week_start }}" class="btn btn-secondary">→ Shopping List</a>
+  </div>
+</form>
 {% endblock %}
