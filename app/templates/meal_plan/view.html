@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Meal Plan{% endblock %}
+{% block content %}
+
+  Meal Plan
+  
+    [← Prev](/meal-plan/?week={{ prev_week }})
+    Week of {{ week_start.strftime('%b %d, %Y') }}
+    [Next →](/meal-plan/?week={{ next_week }})
+  
+
+  
+  
+    
+      
+        Slot
+        {% for day in days %}{{ day }}{% endfor %}
+        
+      
+      
+        {% for slot in meal_slots %}
+        
+          {{ slot }}
+          {% for day_idx in range(7) %}
+          
+            
+              —
+              {% for r in recipes %}
+              
+                {{ r.name }}
+              
+              {% endfor %}
+            
+          {% endfor %}
+        
+        {% endfor %}
+      
+    
+  
+
+  
+    Save Plan
+    [→ Shopping List](/shopping-list/?week={{ week_start }})
+  
+
+{% endblock %}

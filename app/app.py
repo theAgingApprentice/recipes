@@ -9,16 +9,26 @@ logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///:memory:")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DATABASE_URL", "sqlite:///:memory:"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Import models so Flask-Migrate can detect them
+    with app.app_context():
+        import models  # noqa: F401
+
     from routes.recipes import recipes_bp
+    from routes.meal_plan import meal_plan_bp
+    from routes.shopping import shopping_bp
+
     app.register_blueprint(recipes_bp)
+    app.register_blueprint(meal_plan_bp)
+    app.register_blueprint(shopping_bp)
 
     @app.route("/api/health")
     def health():
