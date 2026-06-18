@@ -3,7 +3,10 @@
 {% block content %}
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
   <h1>Recipes</h1>
-  <a href="/recipes/add" class="btn btn-primary">+ Add Recipe</a>
+  <div style="display:flex; gap:0.5rem;">
+    <a href="/recipes/import" class="btn btn-secondary">⬇ Import</a>
+    <a href="/recipes/add" class="btn btn-primary">+ Add Recipe</a>
+  </div>
 </div>
 
 <form method="get" class="filters card">
