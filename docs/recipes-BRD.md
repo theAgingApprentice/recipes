@@ -1,10 +1,19 @@
 # Business Requirements Document
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.0  
-**Date:** June 16, 2026  
+**Version:** 1.1  
+**Date:** June 18, 2026  
 **Author:** MitchellNET  
-**Status:** Draft — pending approval before implementation begins
+**Status:** Active — PR #3 complete, PR #4 in progress
+
+---
+
+## Change Log
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | June 16, 2026 | Initial draft |
+| 1.1 | June 18, 2026 | Added UC-11 through UC-14 based on post-PR-#3 review; updated PR table; wishlist retention decision documented |
 
 ---
 
@@ -42,9 +51,9 @@ Both users access the app from the home LAN only. No external access is required
 **Description:** User opens the app and sees all recipes. Can scroll, search, and filter the list.  
 **Acceptance criteria:**
 - All recipes visible in a clean list/card layout
-- Search by recipe name or keyword
-- Filter by cuisine type, protein, and prep time
-- Each recipe shows: name, cuisine, protein, prep time, rating (if rated), wishlist status
+- Filter by cuisine type and protein
+- Each recipe shows: name, cuisine, protein, prep time
+- Delete button available per recipe on the browse page
 - Duplicates removed from migrated data
 
 ---
@@ -53,25 +62,30 @@ Both users access the app from the home LAN only. No external access is required
 **Actor:** Any user  
 **Description:** User clicks a recipe to see its full detail page.  
 **Acceptance criteria:**
-- Shows all stored metadata: name, source, cuisine, protein, prep time, notes
-- Shows full ingredient list with quantities
-- Shows cooking steps (if stored)
+- Shows all stored metadata: name, source, cuisine, protein, prep time, cook time, notes
+- Shows full ingredient list with quantities and categories
+- Shows cooking steps
 - Shows link back to original external source (opens in new tab)
-- Shows cooking history (dates cooked, ratings)
+- Shows cooking history (dates cooked, ratings, per-cook notes)
 - Shows wishlist status with toggle
+- Shows prep-ahead flag with manual override toggle
 
 ---
 
 ### UC-03 — Add a Recipe via URL
 **Actor:** Andrew  
-**Description:** Andrew pastes a URL into the app. The app fetches the page and uses AI (Claude API) to extract the recipe name, ingredients, steps, cuisine type, protein, and prep time into structured fields. Andrew reviews, edits if needed, and saves.  
+**Description:** Andrew pastes a URL into the app. The app fetches the page and uses AI (Claude API) to extract the recipe name, ingredients, steps, cuisine type, protein, prep time, and prep-ahead flag into structured fields. Andrew reviews, edits if needed, and saves.  
 **Acceptance criteria:**
-- URL input field accessible from main nav or recipe list
+- URL input field accessible from recipe browse page
 - App fetches and parses the URL server-side
+- Loading indicator shown while fetch + extraction is in progress
 - Claude API extracts structured recipe data from page content
-- Extracted data presented in an editable form before saving
+- Claude attempts to detect if recipe requires day-before prep (e.g. marinating overnight, dough resting)
+- Extracted data presented in an editable review form before saving
+- Duplicate check run at review time — if a likely duplicate is found, user is warned and can choose to save anyway or discard
 - Source URL stored and linked on the recipe detail page
-- Handles fetch failures gracefully (site blocks scraping, paywall, etc.) — falls back to manual entry form
+- Loading indicator shown while save is in progress
+- Handles fetch failures gracefully — falls back to manual entry form with error message
 
 ---
 
@@ -79,9 +93,12 @@ Both users access the app from the home LAN only. No external access is required
 **Actor:** Andrew  
 **Description:** Andrew uploads a PDF or image of a recipe. The app uses Claude API to extract structured recipe data. Andrew reviews, edits if needed, and saves.  
 **Acceptance criteria:**
-- File upload accepts PDF and common image formats (JPG, PNG)
+- File upload accepts PDF and common image formats (JPG, PNG, WebP, GIF)
+- Loading indicator shown while extraction is in progress
 - Claude API extracts structured recipe data from document content
-- Extracted data presented in an editable form before saving
+- Claude attempts to detect prep-ahead requirement
+- Extracted data presented in an editable review form before saving
+- Duplicate check run at review time
 - Source noted as "Uploaded document" with filename stored
 - Existing `porkStroganoff.pdf` migrated using this flow
 
@@ -91,7 +108,7 @@ Both users access the app from the home LAN only. No external access is required
 **Actor:** Andrew  
 **Description:** Andrew fills in a form directly to add a recipe (for cookbook references or recipes with no URL/document).  
 **Acceptance criteria:**
-- Form fields: name, source description, source URL (optional), cuisine, protein, prep time, ingredients (list), steps (list), notes
+- Form fields: name, source description, source URL (optional), cuisine, protein, prep time, cook time, ingredients (list), steps (list), notes, prep-ahead flag
 - Cookbook references can be entered as: source = "Nagi cookbook", notes = "Page 39 — Bizarrely good chicken wings"
 - All fields except name are optional
 
@@ -102,7 +119,7 @@ Both users access the app from the home LAN only. No external access is required
 **Description:** Andrew edits any field of an existing recipe.  
 **Acceptance criteria:**
 - Edit form pre-populated with existing data
-- All fields editable
+- All fields editable including prep-ahead flag
 - Save updates the record; cancel discards changes
 
 ---
@@ -111,9 +128,11 @@ Both users access the app from the home LAN only. No external access is required
 **Actor:** Any user  
 **Description:** User tags a recipe as "want to try someday."  
 **Acceptance criteria:**
-- Wishlist toggle on recipe detail page and recipe card
+- Wishlist toggle on recipe detail page
 - Wishlist filter on main browse page
 - Wishlist status persists in database
+
+> **Note (June 2026):** The wishlist feature is retained as-is. A 1–5 star rating system exists on CookLog entries (per cook session). A recipe-level overall rating derived from CookLog is deferred until CookLog is in active use and the right aggregation approach is clear.
 
 ---
 
@@ -125,8 +144,8 @@ Both users access the app from the home LAN only. No external access is required
 - Records date cooked (defaults to today, editable)
 - Optional rating: 1–5 stars
 - Optional notes for that cook (e.g. "added more chilli next time")
-- Cook history visible on recipe detail page (list of dates + ratings)
-- Most recent rating shown on recipe card in browse view
+- Cook history visible on recipe detail page (list of dates + ratings + notes)
+- Most recent cook date shown on recipe detail page
 
 ---
 
@@ -135,7 +154,7 @@ Both users access the app from the home LAN only. No external access is required
 **Description:** User selects recipes for each day of the upcoming week to build a meal plan.  
 **Acceptance criteria:**
 - Weekly calendar view (Mon–Sun)
-- Drag or click to assign a recipe to a day
+- Click to assign a recipe to a day
 - Each day shows the assigned recipe name
 - Meal plan persists (survives page reload)
 - "Generate shopping list" button on meal plan page
@@ -148,9 +167,53 @@ Both users access the app from the home LAN only. No external access is required
 **Acceptance criteria:**
 - Shopping list combines ingredients across all planned recipes
 - Duplicate ingredients aggregated (e.g. "garlic: 6 cloves" not "garlic: 2 cloves" × 3)
-- List grouped by category (produce, meat, pantry, dairy, etc.) — AI-assisted categorization
+- List grouped by category (Produce, Meat, Seafood, Dairy, Grains & Pasta, Canned & Jarred, Condiments & Sauces, Spices & Seasonings, Baking, Oils & Vinegars, Frozen, Beverages, Other)
 - Printable / copyable view
-- Can also generate a per-recipe shopping list from the recipe detail page
+
+---
+
+### UC-11 — Duplicate Detection at Import
+**Actor:** Andrew  
+**Description:** When a recipe is imported (URL or document), the app checks whether a recipe with the same or similar name already exists before saving.  
+**Acceptance criteria:**
+- Exact name match always flagged as duplicate
+- Fuzzy name match (e.g. "Garlic Prawns" vs "Garlic Prawns (Shrimp)") flagged as likely duplicate
+- Warning shown on the review page before save — includes the name of the matching recipe and a link to it
+- User can choose to save anyway (if the duplicate is intentional) or discard
+- Does not block save — user decision is final
+
+---
+
+### UC-12 — Prep-Ahead Flag
+**Actor:** Andrew / Claude  
+**Description:** Recipes that require work the day before (overnight marinating, resting dough, soaking, etc.) are flagged so users know to plan ahead.  
+**Acceptance criteria:**
+- Claude attempts to detect prep-ahead requirement during import and sets the flag automatically
+- Flag shown clearly on recipe detail page and browse list
+- User can manually toggle the flag on the review form and on the edit form
+- Flag persists in database
+
+---
+
+### UC-13 — Loading Indicators During AI Operations
+**Actor:** Any user  
+**Description:** When the app is waiting for Claude API responses (URL extraction, document extraction) or saving a recipe, a loading indicator is shown so the user knows the app is working.  
+**Acceptance criteria:**
+- "Extracting recipe…" indicator shown from form submit until review page loads
+- "Saving…" indicator shown from save submit until redirect to recipe detail
+- Indicator disappears automatically on completion or error
+- No JavaScript frameworks required — vanilla JS acceptable
+
+---
+
+### UC-14 — Delete Recipe
+**Actor:** Andrew  
+**Description:** Andrew can delete a recipe from the browse page.  
+**Acceptance criteria:**
+- Delete button visible per recipe on the browse page
+- Confirmation required before delete (browser confirm dialog is acceptable)
+- Recipe and all related records (ingredients, steps, cook logs) deleted via cascade
+- User returned to browse page after delete
 
 ---
 
@@ -187,6 +250,7 @@ Migration will be done via a one-time seed script run at deploy time.
 - Integration with grocery delivery services
 - Mobile app (browser on phone over LAN is sufficient)
 - Recipe sharing or social features
+- Recipe-level aggregate rating derived from CookLog (deferred — see UC-07 note)
 
 ---
 
@@ -197,4 +261,5 @@ Migration will be done via a one-time seed script run at deploy time.
 - URL import works for RecipeTin Eats and at least 3 other sources
 - Meal plan + shopping list flow works end to end
 - Cook history and ratings persist correctly
+- Prep-ahead flag correctly detected for at least 80% of recipes where it applies
 - Partner can use the app without any instruction
