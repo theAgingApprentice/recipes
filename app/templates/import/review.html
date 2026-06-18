@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Review Imported Recipe{% endblock %}
+{% block content %}
+
+<h1>Review Imported Recipe</h1>
+<p style="color:#555; font-size:0.9rem; margin-bottom:1.5rem;">Claude has extracted the recipe below. Review and edit before saving.</p>
+
+<form method="post" action="/recipes/import/save">
+
+  <!-- Hidden fields -->
+  <input type="hidden" name="source_url" value="{{ recipe.source_url or '' }}">
+
+  <!-- Basic Info -->
+  <div class="card" style="margin-bottom:1rem;">
+    <h2 style="margin-bottom:1rem;">Basic Info</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="name">Recipe Name *</label>
+        <input type="text" id="name" name="name" value="{{ recipe.name or '' }}" required>
+      </div>
+      <div class="form-group">
+        <label for="source_name">Source</label>
+        <input type="text" id="source_name" name="source_name" value="{{ recipe.source_name or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="cuisine">Cuisine</label>
+        <input type="text" id="cuisine" name="cuisine" value="{{ recipe.cuisine or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="protein">Protein</label>
+        <input type="text" id="protein" name="protein" value="{{ recipe.protein or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="prep_time_mins">Prep Time (mins)</label>
+        <input type="number" id="prep_time_mins" name="prep_time_mins" min="0" value="{{ recipe.prep_time_mins or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="cook_time_mins">Cook Time (mins)</label>
+        <input type="number" id="cook_time_mins" name="cook_time_mins" min="0" value="{{ recipe.cook_time_mins or '' }}">
+      </div>
+      <div class="form-group full">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="3">{{ recipe.notes or '' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingredients -->
+  <div class="card" style="margin-bottom:1rem;">
+    <h2 style="margin-bottom:1rem;">Ingredients</h2>
+    <div id="ingredients-list">
+      {% for ing in recipe.ingredients %}
+      <div class="ingredient-row" style="display:grid; grid-template-columns:2fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+        <input type="text" name="ingredient_name[]" value="{{ ing.name }}" placeholder="Ingredient" required>
+        <input type="text" name="ingredient_qty[]" value="{{ ing.quantity or '' }}" placeholder="Quantity">
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="addIngredient()">+ Add Ingredient</button>
+  </div>
+
+  <!-- Steps -->
+  <div class="card" style="margin-bottom:1rem;">
+    <h2 style="margin-bottom:1rem;">Steps</h2>
+    <div id="steps-list">
+      {% for step in recipe.steps %}
+      <div class="step-row" style="display:grid; grid-template-columns:1fr auto; gap:0.5rem; margin-bottom:0.5rem; align-items:start;">
+        <textarea name="step[]" rows="2" placeholder="Step instruction" required>{{ step.instruction }}</textarea>
+        <button type="button" class="btn btn-danger btn-sm" style="margin-top:0.25rem;" onclick="removeRow(this)">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="addStep()">+ Add Step</button>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+    <button type="submit" class="btn btn-primary">Save Recipe</button>
+    <a href="/recipes/import" class="btn btn-secondary">← Start Over</a>
+    <a href="/recipes/" class="btn btn-secondary">Cancel</a>
+  </div>
+
+</form>
+
+<script>
+  function removeRow(btn) {
+    btn.closest('.ingredient-row, .step-row').remove();
+  }
+
+  function addIngredient() {
+    const list = document.getElementById('ingredients-list');
+    const row = document.createElement('div');
+    row.className = 'ingredient-row';
+    row.style.cssText = 'display:grid; grid-template-columns:2fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;';
+    row.innerHTML = `
+      <input type="text" name="ingredient_name[]" placeholder="Ingredient" required>
+      <input type="text" name="ingredient_qty[]" placeholder="Quantity">
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button>
+    `;
+    list.appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  function addStep() {
+    const list = document.getElementById('steps-list');
+    const row = document.createElement('div');
+    row.className = 'step-row';
+    row.style.cssText = 'display:grid; grid-template-columns:1fr auto; gap:0.5rem; margin-bottom:0.5rem; align-items:start;';
+    row.innerHTML = `
+      <textarea name="step[]" rows="2" placeholder="Step instruction" required></textarea>
+      <button type="button" class="btn btn-danger btn-sm" style="margin-top:0.25rem;" onclick="removeRow(this)">✕</button>
+    `;
+    list.appendChild(row);
+    row.querySelector('textarea').focus();
+  }
+</script>
+
+{% endblock %}

@@ -25,10 +25,11 @@ def create_app():
     from routes.recipes import recipes_bp
     from routes.meal_plan import meal_plan_bp
     from routes.shopping import shopping_bp
-
+    from routes.import_ import import_bp
     app.register_blueprint(recipes_bp)
     app.register_blueprint(meal_plan_bp)
     app.register_blueprint(shopping_bp)
+    app.register_blueprint(import_bp)
 
     @app.route("/api/health")
     def health():
