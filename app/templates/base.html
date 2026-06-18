@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}MitchellNET Recipes{% endblock %}</title>
+  <link rel="stylesheet" href="/css/style.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; }
-    nav { background: #1a1a2e; color: #fff; padding: 0.75rem 1.5rem; display: flex; gap: 1.5rem; align-items: center; }
-    nav a { color: #ccc; text-decoration: none; font-size: 0.95rem; }
-    nav a:hover, nav a.active { color: #fff; }
-    nav .brand { font-weight: 700; font-size: 1.05rem; color: #fff; margin-right: auto; }
     main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
     h1 { font-size: 1.6rem; margin-bottom: 1rem; }
     h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
@@ -44,14 +41,12 @@
   </style>
 </head>
 <body>
-  <nav>
-    <span class="brand">🍽 MitchellNET Recipes</span>
-    <a href="/recipes/">Browse</a>
-    <a href="/meal-plan/">Meal Plan</a>
-    <a href="/shopping-list/">Shopping List</a>
-  </nav>
+  <div id="env-banner" class="env-prod"></div>
+  <div data-include="/includes/header.html"></div>
   <main>
     {% block content %}{% endblock %}
   </main>
+  <div data-include="/includes/footer.html"></div>
+  <script src="/js/includes.js" defer></script>
 </body>
 </html>
