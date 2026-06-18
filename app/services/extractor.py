@@ -109,7 +109,7 @@ def extract_from_document(file_bytes: bytes, media_type: str) -> dict:
     client = _get_client()
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1000,
+        max_tokens=4096,
         system=_SYSTEM_PROMPT,
         messages=[
             {
@@ -129,7 +129,7 @@ def call_claude(user_text: str) -> dict:
     client = _get_client()
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1000,
+        max_tokens=4096,
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_text}],
     )
