@@ -51,6 +51,9 @@
       <td>{% if r.wishlist %}<span class="badge">★ Wishlist</span>{% endif %}</td>
       <td class="actions">
         <a href="/recipes/{{ r.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+        <form method="post" action="/recipes/{{ r.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete &quot;{{ r.name }}&quot;? This will also delete its ingredients, steps, and cook log history. This cannot be undone.');">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
       </td>
     </tr>
     {% endfor %}
