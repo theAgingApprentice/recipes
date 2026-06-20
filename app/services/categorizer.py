@@ -3,7 +3,7 @@
 import json
 import logging
 
-from services.extractor import call_claude
+from services.extractor import get_client
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,25 @@ Return ONLY a valid JSON array with no preamble, explanation, or markdown fences
 Use the sort_order values from the input exactly. Every ingredient must appear in the output. Category must be one of the values in the list above — no variations.
 """
 
+def _call_claude_for_categories(prompt: str) -> list:
+    """Send a categorization prompt to Claude using this service's own system prompt."""
+    client = get_client()
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=4096,
+        system=_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = message.content[0].text.strip()
+
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    return json.loads(raw)
+
 def categorize_ingredients(ingredients: list[dict]) -> list[dict]:
     """
     Assign a grocery category to each ingredient in the list.
@@ -38,7 +57,6 @@ def categorize_ingredients(ingredients: list[dict]) -> list[dict]:
     if not ingredients:
         return ingredients
 
-    # Build a compact list for Claude: sort_order + name only
     payload = [
         {"sort_order": ing["sort_order"], "name": ing["name"]}
         for ing in ingredients
@@ -49,14 +67,13 @@ def categorize_ingredients(ingredients: list[dict]) -> list[dict]:
     logger.info("Categorizing %d ingredients", len(ingredients))
 
     try:
-        result = call_claude(prompt)
+        result = _call_claude_for_categories(prompt)
     except Exception as e:
         logger.error("Categorization failed, defaulting to Other: %s", e)
         for ing in ingredients:
             ing.setdefault("category", "Other")
         return ingredients
 
-    # Build a lookup: sort_order -> category
     lookup = {}
     if isinstance(result, list):
         for item in result:
