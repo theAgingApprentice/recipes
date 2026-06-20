@@ -20,7 +20,7 @@
   <div class="card">
     <h2>Import from URL</h2>
     <p style="font-size:0.9rem; color:#555; margin-bottom:1rem;">Paste a link to any recipe page and Claude will extract the details.</p>
-    <form method="post" action="/recipes/import/url">
+    <form method="post" action="/recipes/import/url" class="js-import-form">
       <div class="form-group">
         <label for="url">Recipe URL</label>
         <input type="url" id="url" name="url" placeholder="https://www.example.com/recipes/..." required>
@@ -33,7 +33,7 @@
   <div class="card">
     <h2>Import from File</h2>
     <p style="font-size:0.9rem; color:#555; margin-bottom:1rem;">Upload a PDF or photo of a recipe and Claude will extract the details.</p>
-    <form method="post" action="/recipes/import/upload" enctype="multipart/form-data">
+    <form method="post" action="/recipes/import/upload" enctype="multipart/form-data" class="js-import-form">
       <div class="form-group">
         <label for="file">Recipe File</label>
         <input type="file" id="file" name="file" accept=".pdf,image/jpeg,image/png,image/webp,image/gif" required>
@@ -48,5 +48,26 @@
 <div style="margin-top:1.5rem;">
   <a href="/recipes/" class="btn btn-secondary">← Back to Recipes</a>
 </div>
+
+<div id="import-loading-overlay" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.85); z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
+  <div style="width:40px; height:40px; border:4px solid #e5e7eb; border-top-color:#2563eb; border-radius:50%; animation:import-spin 0.8s linear infinite;"></div>
+  <p style="margin-top:1rem; font-size:1rem; color:#333;">Extracting recipe…</p>
+</div>
+
+<style>
+@keyframes import-spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.querySelectorAll(".js-import-form").forEach(function (form) {
+  form.addEventListener("submit", function () {
+    var btn = form.querySelector("button[type=submit]");
+    if (btn) { btn.disabled = true; }
+    document.getElementById("import-loading-overlay").style.display = "flex";
+  });
+});
+</script>
 
 {% endblock %}
