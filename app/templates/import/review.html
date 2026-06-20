@@ -5,6 +5,13 @@
 <h1>Review Imported Recipe</h1>
 <p style="color:#555; font-size:0.9rem; margin-bottom:1.5rem;">Claude has extracted the recipe below. Review and edit before saving.</p>
 
+{% if duplicate %}
+<div class="alert" style="padding:0.75rem 1rem; margin-bottom:1.5rem; border-radius:4px; background:#fef3c7; color:#92400e; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+  <span>⚠ This looks similar to an existing recipe: <strong>{{ duplicate.name }}</strong>. You can save anyway, or view the existing one first.</span>
+  <a href="/recipes/{{ duplicate.id }}" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">View Existing Recipe</a>
+</div>
+{% endif %}
+
 <form method="post" action="/recipes/import/save" class="js-save-form">
 
   <!-- Hidden fields -->
