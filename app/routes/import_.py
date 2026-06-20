@@ -1,5 +1,6 @@
 """Import routes — URL fetch and document upload via Claude API."""
 
+import difflib
 import logging
 
 from flask import Blueprint, flash, redirect, render_template, request
@@ -21,6 +22,28 @@ _ALLOWED_MIME_TYPES = {
     "image/webp",
     "image/gif",
 }
+
+_DUPLICATE_THRESHOLD = 0.8
+
+def _find_duplicate(name):
+    """
+    Find an existing recipe whose name closely matches the given name.
+
+    Case-insensitive. An exact match scores 1.0 and is automatically
+    included, since 1.0 >= threshold. Returns the single best-scoring
+    match at or above the threshold, or None if nothing qualifies.
+    """
+    if not name:
+        return None
+    target = name.strip().lower()
+    best_match = None
+    best_score = 0.0
+    for r in Recipe.query.all():
+        score = difflib.SequenceMatcher(None, target, r.name.strip().lower()).ratio()
+        if score >= _DUPLICATE_THRESHOLD and score > best_score:
+            best_score = score
+            best_match = r
+    return best_match
 
 # ---------------------------------------------------------------------------
 # GET /import
@@ -53,7 +76,8 @@ def import_url():
         flash("Failed to fetch or extract the recipe. Check the URL and try again.", "error")
         return redirect("/recipes/import")
 
-    return render_template("import/review.html", recipe=recipe_data)
+    duplicate = _find_duplicate(recipe_data.get("name"))
+    return render_template("import/review.html", recipe=recipe_data, duplicate=duplicate)
 
 # ---------------------------------------------------------------------------
 # POST /import/upload
@@ -86,7 +110,8 @@ def import_upload():
         flash("Failed to extract the recipe from the file. Please try again.", "error")
         return redirect("/recipes/import")
 
-    return render_template("import/review.html", recipe=recipe_data)
+    duplicate = _find_duplicate(recipe_data.get("name"))
+    return render_template("import/review.html", recipe=recipe_data, duplicate=duplicate)
 
 # ---------------------------------------------------------------------------
 # POST /import/save
