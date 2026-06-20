@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 _CLIENT = None
 
-def _get_client() -> anthropic.Anthropic:
+def get_client() -> anthropic.Anthropic:
     global _CLIENT
     if _CLIENT is None:
         api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -106,7 +106,7 @@ def extract_from_document(file_bytes: bytes, media_type: str) -> dict:
 
     logger.info("Extracting recipe from document (%s, %d bytes)", media_type, len(file_bytes))
 
-    client = _get_client()
+    client = get_client()
     message = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
@@ -126,7 +126,7 @@ def extract_from_document(file_bytes: bytes, media_type: str) -> dict:
 
 def call_claude(user_text: str) -> dict:
     """Send a text prompt to Claude and return the parsed recipe dict."""
-    client = _get_client()
+    client = get_client()
     message = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
