@@ -54,6 +54,11 @@
              {% if recipe and recipe.wishlist %}checked{% endif %}>
       <label for="wishlist" style="font-weight:normal;">Add to wishlist</label>
     </div>
+    <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+      <input type="checkbox" name="prep_ahead_override" value="1" id="prep_ahead_override"
+             {% if recipe and recipe.prep_ahead_override %}checked{% endif %}>
+      <label for="prep_ahead_override" style="font-weight:normal;">⏰ Requires day-before prep (marinating, resting, soaking)</label>
+    </div>
   </div>
 
   <hr style="margin:1rem 0; border-color:#e5e7eb;">

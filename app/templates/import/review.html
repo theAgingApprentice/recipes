@@ -49,6 +49,11 @@
         <label for="notes">Notes</label>
         <textarea id="notes" name="notes" rows="3">{{ recipe.notes or '' }}</textarea>
       </div>
+      <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+        <input type="checkbox" name="prep_ahead" value="1" id="prep_ahead"
+               {% if recipe.prep_ahead %}checked{% endif %}>
+        <label for="prep_ahead" style="font-weight:normal;">⏰ Requires day-before prep (marinating, resting, soaking)</label>
+      </div>
     </div>
   </div>
 
