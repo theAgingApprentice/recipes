@@ -38,7 +38,7 @@
 <table>
   <thead>
     <tr>
-      <th>Name</th><th>Cuisine</th><th>Protein</th><th>Prep</th><th>Wishlist</th><th></th>
+      <th>Name</th><th>Cuisine</th><th>Protein</th><th>Prep</th><th>Wishlist</th><th>Cook History</th><th></th>
     </tr>
   </thead>
   <tbody>
@@ -49,7 +49,17 @@
       <td>{{ r.protein or '—' }}</td>
       <td>{{ r.prep_time_mins ~ ' min' if r.prep_time_mins else '—' }}</td>
       <td>{% if r.wishlist %}<span class="badge">★ Wishlist</span>{% endif %}</td>
+      <td style="font-size:0.85rem; color:#555;">
+        {% if r.cook_logs %}
+          {% set rated = r.cook_logs | selectattr('rating') | list %}
+          Made {{ r.cook_logs | length }}×
+          {% if rated %}· ★ {{ '%.1f' | format(rated | sum(attribute='rating') / rated | length) }}{% endif %}
+        {% endif %}
+      </td>
       <td class="actions">
+        <form method="post" action="/{{ r.id }}/cook" style="display:inline;">
+          <button type="submit" class="btn btn-primary btn-sm">✓ Made it</button>
+        </form>
         <a href="/recipes/{{ r.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
         <form method="post" action="/recipes/{{ r.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete &quot;{{ r.name }}&quot;? This will also delete its ingredients, steps, and cook log history. This cannot be undone.');">
           <button type="submit" class="btn btn-danger btn-sm">Delete</button>
