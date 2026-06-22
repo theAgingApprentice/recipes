@@ -65,7 +65,7 @@
 <div class="card">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
     <h2 style="margin:0;">Cook Log</h2>
-    <form method="post" action="/{{ recipe.id }}/cook">
+    <form method="post" action="/recipes/{{ recipe.id }}/cook">
       <button type="submit" class="btn btn-primary btn-sm">✓ We made this!</button>
     </form>
   </div>
@@ -89,8 +89,8 @@
         <td>{{ '★' * c.rating ~ '☆' * (5 - c.rating) if c.rating else '—' }}</td>
         <td>{{ c.notes or '' }}</td>
         <td class="actions">
-          <a href="/cook-log/{{ c.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
-          <form method="post" action="/cook-log/{{ c.id }}/delete" style="display:inline;"
+          <a href="/recipes/cook-log/{{ c.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+          <form method="post" action="/recipes/cook-log/{{ c.id }}/delete" style="display:inline;"
                 onsubmit="return confirm('Delete this cook entry?');">
             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
           </form>

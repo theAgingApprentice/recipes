@@ -57,7 +57,7 @@
         {% endif %}
       </td>
       <td class="actions">
-        <form method="post" action="/{{ r.id }}/cook" style="display:inline;">
+        <form method="post" action="/recipes/{{ r.id }}/cook" style="display:inline;">
           <button type="submit" class="btn btn-primary btn-sm">✓ Made it</button>
         </form>
         <a href="/recipes/{{ r.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
