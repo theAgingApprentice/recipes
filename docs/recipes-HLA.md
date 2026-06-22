@@ -1,9 +1,9 @@
 # High Level Architecture
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.1
-**Date:** June 18, 2026
-**Status:** Active — PR #3 complete, PR #4 in progress
+**Version:** 1.2
+**Date:** June 22, 2026
+**Status:** Active — PR #4 in progress (item 6 next); cook log routes and templates added
 
 ---
 
@@ -13,6 +13,7 @@
 |---------|------|---------|
 | 1.0 | June 16, 2026 | Initial draft |
 | 1.1 | June 18, 2026 | Updated data model for prep_ahead flag; documented categorizer bug fix; added Claude API lessons learned; updated PR table |
+| 1.2 | June 22, 2026 | Added cook log routes, templates, and query helpers (UC-15); cook_logs table already present in v1.1 data model — no schema change needed; updated directory structure, route table, and PR plan |
 
 ---
 
@@ -117,6 +118,7 @@ recipes/
 │   │   └── meal_plan.py     # MealPlan, MealPlanEntry models
 │   ├── routes/
 │   │   ├── recipes.py       # Browse, view, add, edit, delete routes
+│   │   ├── cook_log.py      # Cook log routes: add entry, edit entry, delete entry
 │   │   ├── import_.py       # URL import, document upload, save routes
 │   │   ├── meal_plan.py     # Meal plan routes
 │   │   └── shopping.py      # Shopping list routes
@@ -128,11 +130,13 @@ recipes/
 │       ├── base.html
 │       ├── recipes/
 │       │   ├── browse.html
-│       │   ├── detail.html
+│       │   ├── detail.html          # Cook log summary + full log + edit/delete buttons
 │       │   └── form.html
 │       ├── import/
 │       │   ├── import.html
 │       │   └── review.html
+│       ├── cook_log/
+│       │   └── edit.html            # Edit a single cook log entry (date, rating, notes)
 │       ├── meal_plan/
 │       │   └── view.html
 │       └── shopping/
@@ -266,6 +270,57 @@ Stored in `~/services/recipes/.env` as `ANTHROPIC_API_KEY`. Never committed to g
 
 ---
 
+## 6.6 Cook Log Routes (UC-08, UC-15)
+
+No Claude API involvement. All cook log operations are standard Flask + SQLAlchemy CRUD.
+
+### Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/recipes/<id>/cook` | Create a new cook log entry for today; redirects to detail page |
+| GET | `/cook-log/<log_id>/edit` | Render edit form pre-populated with existing entry |
+| POST | `/cook-log/<log_id>/edit` | Save edits to date, rating, and notes |
+| POST | `/cook-log/<log_id>/delete` | Delete the entry after confirmation; redirects to detail page |
+
+All routes registered on the `cook_log` blueprint in `app/routes/cook_log.py` and registered in `app/app.py`.
+
+### Detail Page Cook Log Section (recipes/detail.html)
+
+**Summary block** (always shown if at least one cook log entry exists):
+- "Made X times"
+- "Avg rating: Y.Y ★" — computed in Python from `cook_log` entries where `rating IS NOT NULL`; omitted if no entries have a rating
+- "Last made: [date]" — most recent `cooked_on` value
+
+**Full log table** (reverse chronological):
+- Columns: Date | Rating | Notes | Actions
+- Rating displayed as filled ★ characters (e.g. ★★★☆☆ for 3); blank cell if not set
+- Edit and Delete buttons per row; Delete triggers `confirm()` dialog
+
+**"We made this!" button** on the detail page submits a POST to `/recipes/<id>/cook`.
+
+### Browse Page (recipes/browse.html)
+
+- "We made this!" button per recipe row — POST to `/recipes/<id>/cook`
+- Cook summary shown per row: "Made X times" and "★ Y.Y" (average) — queried efficiently via a single joined query or subquery to avoid N+1; omitted if never cooked
+
+### Query Helper
+
+Add a helper to `app/models/recipe.py` (or a `@property` on the `Recipe` model) to compute cook summary data:
+
+```python
+@property
+def cook_summary(self):
+    logs = self.cook_logs
+    count = len(logs)
+    rated = [l.rating for l in logs if l.rating is not None]
+    avg = round(sum(rated) / len(rated), 1) if rated else None
+    last = max((l.cooked_on for l in logs), default=None)
+    return {"count": count, "avg_rating": avg, "last_cooked": last}
+```
+
+---
+
 ## 7. NGINX Integration
 
 Location block in `InternalWebServer/nginx/conf.d/prod.conf` and `000-bareip.conf`:
@@ -338,8 +393,14 @@ Follows standard MitchellNET pattern:
 | `recipes` | #2 | Done | Core models and browse/detail/add/edit routes |
 | `recipes` | #16 | Done | Claude API import (URL + document upload) |
 | `recipes` | #17 | Done | Fix max_tokens 1000 to 4096 |
-| `recipes` | #4 | Next | Loading indicators, delete, duplicate detection, prep-ahead flag, categorizer bug fix |
-| `recipes` | #5 | Planned | Meal plan + shopping list |
-| `recipes` | #6 | Planned | Seed script + data migration |
+| `recipes` | #19 | Done | Fix categorizer.py — own API call + own system prompt |
+| `recipes` | #20 | Done | Loading indicator on URL-import and file-upload forms |
+| `recipes` | #21 | Done | Loading indicator on save form (review page) |
+| `recipes` | #22 | Done | Delete button on browse page (cascade, confirm dialog) |
+| `recipes` | #23 | Done | Duplicate detection at import (difflib, threshold 0.8) |
+| `recipes` | #4 (item 6) | Next | Prep-ahead flag — DB migration + extractor schema + UI toggles |
+| `recipes` | #5 | Planned | Cook log — add/edit/delete entries, summary + full log on detail, button on browse |
+| `recipes` | #6 | Planned | Meal plan + shopping list |
+| `recipes` | #7 | Planned | Seed script + data migration |
 | `InternalWebServer` | — | Planned | Add /recipes/ location block, remove static recipes.html |
 | `mitchellnet-infra` | — | Planned | ARCHITECTURE.md update |
