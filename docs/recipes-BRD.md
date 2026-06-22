@@ -1,10 +1,10 @@
 # Business Requirements Document
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.1  
-**Date:** June 18, 2026  
+**Version:** 1.2  
+**Date:** June 22, 2026  
 **Author:** MitchellNET  
-**Status:** Active — PR #3 complete, PR #4 in progress
+**Status:** Active — PR #4 in progress (item 6 next); UC-15 added
 
 ---
 
@@ -14,6 +14,7 @@
 |---------|------|---------|
 | 1.0 | June 16, 2026 | Initial draft |
 | 1.1 | June 18, 2026 | Added UC-11 through UC-14 based on post-PR-#3 review; updated PR table; wishlist retention decision documented |
+| 1.2 | June 22, 2026 | Added UC-15 Cook Log — track each time a recipe is made, with optional rating (1–5) and optional per-cook notes; updated UC-02 and UC-08 accordingly |
 
 ---
 
@@ -66,7 +67,9 @@ Both users access the app from the home LAN only. No external access is required
 - Shows full ingredient list with quantities and categories
 - Shows cooking steps
 - Shows link back to original external source (opens in new tab)
-- Shows cooking history (dates cooked, ratings, per-cook notes)
+- Shows cook log summary (times made · average rating) at the top of the cook history section
+- Shows full cook log history below the summary: each entry shows date cooked, star rating (if set), and per-cook notes (if any)
+- "We made this!" button visible on the detail page
 - Shows wishlist status with toggle
 - Shows prep-ahead flag with manual override toggle
 
@@ -136,16 +139,48 @@ Both users access the app from the home LAN only. No external access is required
 
 ---
 
-### UC-08 — Record a Cook
+### UC-08 — Record a Cook (entry point)
 **Actor:** Any user  
-**Description:** After cooking a recipe, user records that it was made today and optionally rates it.  
+**Description:** User confirms they are making (or have made) a recipe. This creates a new cook log entry dated today. Rating and notes are optional and can be added or edited afterwards.  
 **Acceptance criteria:**
-- "We made this!" button on recipe detail page
-- Records date cooked (defaults to today, editable)
-- Optional rating: 1–5 stars
-- Optional notes for that cook (e.g. "added more chilli next time")
-- Cook history visible on recipe detail page (list of dates + ratings + notes)
-- Most recent cook date shown on recipe detail page
+- "We made this!" button on the recipe detail page and on the browse page (per-recipe row)
+- Pressing the button creates a new cook log entry with `cooked_on` defaulting to today
+- No rating or notes are required at this point — entry is saved immediately without a modal
+- User is returned to the recipe detail page where the new entry is visible in the cook log
+- Cook log summary on the detail page updates immediately (times made count increments)
+
+---
+
+### UC-15 — Cook Log (view, edit, and delete)
+**Actor:** Any user  
+**Description:** Every time a recipe is made, a cook log entry is created (via UC-08). On the recipe detail page, the full cook log is visible. Each entry can be edited to add or update the date, rating, and notes. Entries can also be deleted.  
+**Acceptance criteria:**
+
+**Summary (top of cook log section on detail page):**
+- Shows "Made X times" count
+- Shows "Avg rating: Y.Y ★" if at least one entry has a rating; omitted if no entries have been rated
+- Shows "Last made: [date]" for the most recent cook entry
+
+**Full cook log (below summary on detail page):**
+- Each entry shows: date cooked, star rating (1–5, shown as ★ characters; blank if not yet rated), and per-cook notes (blank if none)
+- Entries listed in reverse chronological order (most recent first)
+- Each entry has an Edit button and a Delete button
+
+**Edit a cook log entry:**
+- Edit form pre-populated with existing date, rating, and notes
+- Date is editable (defaults to `cooked_on` value)
+- Rating is optional (1–5 stars; can be cleared)
+- Notes are optional free text
+- Save updates the entry; cancel discards changes
+
+**Delete a cook log entry:**
+- Confirmation required before delete (browser confirm dialog is acceptable)
+- Entry deleted; detail page reloads with updated summary and log
+- Deleting the only entry with a rating updates the average accordingly
+
+**Browse page:**
+- "We made this!" button visible per recipe row (see UC-08)
+- Cook count and average rating shown per recipe row (e.g. "Made 3 times · ★ 4.2")
 
 ---
 
@@ -260,6 +295,8 @@ Migration will be done via a one-time seed script run at deploy time.
 - No duplicate recipes in the database
 - URL import works for RecipeTin Eats and at least 3 other sources
 - Meal plan + shopping list flow works end to end
-- Cook history and ratings persist correctly
+- Cook log entries can be created from both the detail page and the browse page
+- Cook log ratings and notes persist correctly and are editable after the fact
+- Cook summary (times made, average rating) displays correctly on detail and browse pages
 - Prep-ahead flag correctly detected for at least 80% of recipes where it applies
 - Partner can use the app without any instruction
