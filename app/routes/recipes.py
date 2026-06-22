@@ -133,6 +133,8 @@ def _recipe_from_form(r):
     r.cook_time_mins = _int_or_none(request.form.get("cook_time_mins"))
     r.notes = request.form.get("notes", "").strip() or None
     r.wishlist = bool(request.form.get("wishlist"))
+    r.prep_ahead_override = bool(request.form.get("prep_ahead_override"))
+    r.prep_ahead = bool(request.form.get("prep_ahead_override"))
     return r
 
 

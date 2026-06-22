@@ -15,6 +15,8 @@ class Recipe(db.Model):
     cook_time_mins = db.Column(db.Integer)
     notes = db.Column(db.Text)
     wishlist = db.Column(db.Boolean, nullable=False, default=False)
+    prep_ahead = db.Column(db.Boolean, nullable=False, default=False)
+    prep_ahead_override = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

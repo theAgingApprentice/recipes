@@ -138,6 +138,8 @@ def import_save():
         cook_time_mins=cook,
         notes=f.get("notes", "").strip() or None,
         wishlist=False,
+        prep_ahead=bool(f.get("prep_ahead")),
+        prep_ahead_override=bool(f.get("prep_ahead")),
     )
     db.session.add(recipe)
     db.session.flush()  # get recipe.id before adding children

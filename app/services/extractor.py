@@ -31,6 +31,7 @@ The JSON must conform exactly to this schema:
   "prep_time_mins": integer or null,
   "cook_time_mins": integer or null,
   "notes": string or null,
+  "prep_ahead": boolean,
   "ingredients": [
     {"name": string, "quantity": string or null, "sort_order": integer}
   ],
@@ -46,6 +47,7 @@ Rules:
 - protein: primary protein e.g. "Chicken", "Beef", "Tofu". Null if none.
 - prep_time_mins and cook_time_mins: integers in minutes, null if not stated.
 - notes: any useful tips, serving suggestions, or variations. Null if none.
+- prep_ahead: true if the recipe requires any work the day before or hours in advance — overnight marinating, dough resting, soaking dried ingredients, long brining, or chilling a mixture before use. false otherwise. When in doubt, set false.
 - ingredients: every ingredient with sort_order starting at 0.
 - steps: every step in order, step_number starting at 1.
 """
