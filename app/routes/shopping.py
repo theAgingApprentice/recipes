@@ -11,17 +11,28 @@ def _current_week_start():
 
 
 def _build_list(plan):
-    """Return a list of (category, ingredient_name, quantity) tuples."""
-    items = []
+    """Return a list of (category, ingredient_name, quantities) tuples, aggregated."""
     if not plan:
-        return items
-    seen = set()
+        return []
+
+    # Collect all quantities per (category, normalised name)
+    from collections import defaultdict
+    buckets = defaultdict(lambda: {"category": "Other", "quantities": []})
+
     for entry in plan.entries:
         for ing in entry.recipe.ingredients:
-            key = ing.name.lower()
-            if key not in seen:
-                seen.add(key)
-                items.append((ing.category or "Other", ing.name, ing.quantity or ""))
+            key = ing.name.strip().lower()
+            bucket = buckets[key]
+            bucket["category"] = ing.category or "Other"
+            bucket["name"] = ing.name.strip()
+            if ing.quantity and ing.quantity.strip():
+                bucket["quantities"].append(ing.quantity.strip())
+
+    items = []
+    for bucket in buckets.values():
+        qty_str = " + ".join(bucket["quantities"]) if bucket["quantities"] else ""
+        items.append((bucket["category"], bucket["name"], qty_str))
+
     items.sort(key=lambda x: (x[0], x[1]))
     return items
 
