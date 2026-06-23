@@ -14,7 +14,7 @@
     <select name="cuisine">
       <option value="">All</option>
       {% for c in cuisines %}
-      <option value="{{ c }}" {% if filters.cuisine == c %}selected{% endif %}>{{ c }}</option>
+      <option value="{{ c.name }}" {% if filters.cuisine == c.name %}selected{% endif %}>{{ c.name }}</option>
       {% endfor %}
     </select>
   </label>
@@ -23,6 +23,14 @@
       <option value="">All</option>
       {% for p in proteins %}
       <option value="{{ p }}" {% if filters.protein == p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Dish Type
+    <select name="dish_type">
+      <option value="">All</option>
+      {% for dt in dish_types %}
+      <option value="{{ dt.name }}" {% if filters.dish_type == dt.name %}selected{% endif %}>{{ dt.name }}</option>
       {% endfor %}
     </select>
   </label>
@@ -38,7 +46,7 @@
 <table>
   <thead>
     <tr>
-      <th>Name</th><th>Cuisine</th><th>Protein</th><th>Prep</th><th>Wishlist</th><th>Cook History</th><th></th>
+      <th>Name</th><th>Cuisine</th><th>Dish Type</th><th>Protein</th><th>Prep</th><th>Wishlist</th><th>Cook History</th><th></th>
     </tr>
   </thead>
   <tbody>
@@ -46,6 +54,7 @@
     <tr>
       <td><a href="/recipes/{{ r.id }}">{{ r.name }}</a></td>
       <td>{{ r.cuisine or '—' }}</td>
+      <td>{{ r.dish_type or '—' }}</td>
       <td>{{ r.protein or '—' }}</td>
       <td>{{ r.prep_time_mins ~ ' min' if r.prep_time_mins else '—' }}</td>
       <td>{% if r.wishlist %}<span class="badge">★ Wishlist</span>{% endif %}</td>

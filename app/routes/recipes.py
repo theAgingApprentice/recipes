@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for
 from config.database import db
-from models.recipe import Recipe, Ingredient, Step, Cuisine
+from models.recipe import Recipe, Ingredient, Step, Cuisine, DishType
 
 recipes_bp = Blueprint("recipes", __name__, template_folder="../templates")
 
@@ -11,12 +11,15 @@ PROTEINS = ["Beef", "Chicken", "Fish", "Pork", "Vegan", "Vegetarian", "Other"]
 def browse():
     cuisine = request.args.get("cuisine", "")
     protein = request.args.get("protein", "")
+    dish_type = request.args.get("dish_type", "")
     wishlist = request.args.get("wishlist", "")
     q = Recipe.query
     if cuisine:
         q = q.filter(Recipe.cuisine == cuisine)
     if protein:
         q = q.filter(Recipe.protein == protein)
+    if dish_type:
+        q = q.filter(Recipe.dish_type == dish_type)
     if wishlist == "1":
         q = q.filter(Recipe.wishlist == True)  # noqa: E712
     recipes = q.order_by(Recipe.name).all()
@@ -24,8 +27,9 @@ def browse():
         "recipes/browse.html",
         recipes=recipes,
         cuisines=Cuisine.ordered(),
+        dish_types=DishType.ordered(),
         proteins=PROTEINS,
-        filters={"cuisine": cuisine, "protein": protein, "wishlist": wishlist},
+        filters={"cuisine": cuisine, "protein": protein, "wishlist": wishlist, "dish_type": dish_type},
     )
 
 
@@ -45,7 +49,7 @@ def add():
         _save_steps(r)
         db.session.commit()
         return redirect(f"/recipes/{r.id}")
-    return render_template("recipes/form.html", recipe=None, cuisines=Cuisine.ordered(), proteins=PROTEINS)
+    return render_template("recipes/form.html", recipe=None, cuisines=Cuisine.ordered(), dish_types=DishType.ordered(), proteins=PROTEINS)
 
 
 @recipes_bp.route("/<int:recipe_id>/edit", methods=["GET", "POST"])
@@ -62,7 +66,7 @@ def edit(recipe_id):
         _save_steps(r)
         db.session.commit()
         return redirect(f"/recipes/{r.id}")
-    return render_template("recipes/form.html", recipe=r, cuisines=Cuisine.ordered(), proteins=PROTEINS)
+    return render_template("recipes/form.html", recipe=r, cuisines=Cuisine.ordered(), dish_types=DishType.ordered(), proteins=PROTEINS)
 
 
 @recipes_bp.route("/<int:recipe_id>/delete", methods=["POST"])
@@ -83,6 +87,7 @@ def api_list():
             "id": r.id,
             "name": r.name,
             "cuisine": r.cuisine,
+            "dish_type": r.dish_type,
             "protein": r.protein,
             "prep_time_mins": r.prep_time_mins,
             "wishlist": r.wishlist,
@@ -100,6 +105,7 @@ def api_detail(recipe_id):
         "source_name": r.source_name,
         "source_url": r.source_url,
         "cuisine": r.cuisine,
+        "dish_type": r.dish_type,
         "protein": r.protein,
         "prep_time_mins": r.prep_time_mins,
         "cook_time_mins": r.cook_time_mins,
@@ -127,6 +133,7 @@ def _recipe_from_form(r):
     r.source_name = request.form.get("source_name", "").strip() or None
     r.source_url = request.form.get("source_url", "").strip() or None
     r.cuisine = request.form.get("cuisine") or None
+    r.dish_type = request.form.get("dish_type") or None
     r.protein = request.form.get("protein") or None
     r.prep_time_mins = _int_or_none(request.form.get("prep_time_mins"))
     r.cook_time_mins = _int_or_none(request.form.get("cook_time_mins"))

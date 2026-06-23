@@ -15,6 +15,7 @@
 <div class="card">
   <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
     {% if recipe.cuisine %}<span class="tag">{{ recipe.cuisine }}</span>{% endif %}
+    {% if recipe.dish_type %}<span class="tag">{{ recipe.dish_type }}</span>{% endif %}
     {% if recipe.protein %}<span class="tag">{{ recipe.protein }}</span>{% endif %}
     {% if recipe.prep_time_mins %}<span class="tag">Prep {{ recipe.prep_time_mins }} min</span>{% endif %}
     {% if recipe.cook_time_mins %}<span class="tag">Cook {{ recipe.cook_time_mins }} min</span>{% endif %}

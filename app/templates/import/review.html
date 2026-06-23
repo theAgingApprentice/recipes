@@ -34,6 +34,15 @@
         <input type="text" id="cuisine" name="cuisine" value="{{ recipe.cuisine or '' }}">
       </div>
       <div class="form-group">
+        <label for="dish_type">Dish Type</label>
+        <select id="dish_type" name="dish_type">
+          <option value="">— select —</option>
+          {% for dt in dish_types %}
+          <option value="{{ dt.name }}" {% if recipe.dish_type == dt.name %}selected{% endif %}>{{ dt.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
         <label for="protein">Protein</label>
         <input type="text" id="protein" name="protein" value="{{ recipe.protein or '' }}">
       </div>

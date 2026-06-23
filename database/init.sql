@@ -14,7 +14,17 @@ CREATE TABLE IF NOT EXISTS proteins (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO cuisines (name) VALUES
-  ('American'), ('Asian'), ('Italian'), ('Mediterranean'), ('Mexican'), ('Other');
+  ('American'), ('Asian'), ('British'), ('Cantonese'), ('Chinese'),
+  ('Eastern European'), ('French'), ('Indonesian'), ('Israeli'), ('Italian'),
+  ('Italian-American'), ('Mediterranean'), ('Mexican'), ('Russian'),
+  ('Thai'), ('Vietnamese'), ('Western'), ('Other');
+
+CREATE TABLE IF NOT EXISTS dish_types (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO dish_types (name) VALUES
+  ('Breakfast'), ('Dessert'), ('Main'), ('Side'), ('Snack'), ('Starter'), ('Other');
 
 INSERT INTO proteins (name) VALUES
   ('Beef'), ('Chicken'), ('Fish'), ('Pork'), ('Vegan'), ('Vegetarian'), ('Other');
@@ -25,6 +35,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   source_name VARCHAR(255),
   source_url TEXT,
   cuisine VARCHAR(100),
+  dish_type VARCHAR(100),
   protein VARCHAR(100),
   prep_time_mins INT,
   cook_time_mins INT,
