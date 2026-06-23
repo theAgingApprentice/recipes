@@ -53,3 +53,19 @@ class CookLog(db.Model):
     cooked_on = db.Column(db.Date, nullable=False)
     rating = db.Column(db.SmallInteger)
     notes = db.Column(db.Text)
+
+
+class Cuisine(db.Model):
+    __tablename__ = "cuisines"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+
+    @staticmethod
+    def ordered():
+        """Return all cuisines alphabetically, Other always last."""
+        from sqlalchemy import case
+        return Cuisine.query.order_by(
+            case({"Other": 1}, value=Cuisine.name, else_=0),
+            Cuisine.name
+        ).all()
