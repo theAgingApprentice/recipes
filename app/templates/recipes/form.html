@@ -22,7 +22,16 @@
       <select name="cuisine">
         <option value="">— select —</option>
         {% for c in cuisines %}
-        <option value="{{ c }}" {% if recipe and recipe.cuisine == c %}selected{% endif %}>{{ c }}</option>
+        <option value="{{ c.name }}" {% if recipe and recipe.cuisine == c.name %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Dish Type</label>
+      <select name="dish_type">
+        <option value="">— select —</option>
+        {% for dt in dish_types %}
+        <option value="{{ dt.name }}" {% if recipe and recipe.dish_type == dt.name %}selected{% endif %}>{{ dt.name }}</option>
         {% endfor %}
       </select>
     </div>

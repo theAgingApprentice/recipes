@@ -10,6 +10,7 @@ class Recipe(db.Model):
     source_name = db.Column(db.String(255))
     source_url = db.Column(db.Text)
     cuisine = db.Column(db.String(100))
+    dish_type = db.Column(db.String(100))
     protein = db.Column(db.String(100))
     prep_time_mins = db.Column(db.Integer)
     cook_time_mins = db.Column(db.Integer)
@@ -68,4 +69,20 @@ class Cuisine(db.Model):
         return Cuisine.query.order_by(
             case({"Other": 1}, value=Cuisine.name, else_=0),
             Cuisine.name
+        ).all()
+
+
+class DishType(db.Model):
+    __tablename__ = "dish_types"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+
+    @staticmethod
+    def ordered():
+        """Return all dish types alphabetically, Other always last."""
+        from sqlalchemy import case
+        return DishType.query.order_by(
+            case({"Other": 1}, value=DishType.name, else_=0),
+            DishType.name
         ).all()

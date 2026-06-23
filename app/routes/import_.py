@@ -6,7 +6,7 @@ import logging
 from flask import Blueprint, flash, redirect, render_template, request
 
 from config.database import db
-from models.recipe import Ingredient, Recipe, Step
+from models.recipe import Ingredient, Recipe, Step, DishType
 from services.categorizer import categorize_ingredients
 from services.extractor import extract_from_document, extract_from_text
 from services.fetcher import fetch_url
@@ -77,7 +77,12 @@ def import_url():
         return redirect("/recipes/import")
 
     duplicate = _find_duplicate(recipe_data.get("name"))
-    return render_template("import/review.html", recipe=recipe_data, duplicate=duplicate)
+    return render_template(
+        "import/review.html",
+        recipe=recipe_data,
+        duplicate=duplicate,
+        dish_types=DishType.ordered(),
+    )
 
 # ---------------------------------------------------------------------------
 # POST /import/upload
@@ -111,7 +116,12 @@ def import_upload():
         return redirect("/recipes/import")
 
     duplicate = _find_duplicate(recipe_data.get("name"))
-    return render_template("import/review.html", recipe=recipe_data, duplicate=duplicate)
+    return render_template(
+        "import/review.html",
+        recipe=recipe_data,
+        duplicate=duplicate,
+        dish_types=DishType.ordered(),
+    )
 
 # ---------------------------------------------------------------------------
 # POST /import/save
@@ -133,6 +143,7 @@ def import_save():
         source_name=f.get("source_name", "").strip() or None,
         source_url=f.get("source_url", "").strip() or None,
         cuisine=f.get("cuisine", "").strip() or None,
+        dish_type=f.get("dish_type", "").strip() or None,
         protein=f.get("protein", "").strip() or None,
         prep_time_mins=prep,
         cook_time_mins=cook,

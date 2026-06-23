@@ -27,6 +27,7 @@ The JSON must conform exactly to this schema:
   "name": string,
   "source_name": string or null,
   "cuisine": string or null,
+  "dish_type": string or null,
   "protein": string or null,
   "prep_time_mins": integer or null,
   "cook_time_mins": integer or null,
@@ -44,6 +45,7 @@ Rules:
 - Return ONLY the JSON object. No text before or after.
 - source_name: the website or publication name, not the URL.
 - cuisine: single descriptor e.g. "Italian", "Thai", "Mexican". Null if unclear.
+- dish_type: one of Breakfast, Starter, Main, Side, Dessert, Snack, Other. Use "Main" for primary dinner/lunch dishes. Use "Starter" for appetisers and soups served before a main. Use "Side" for accompaniments not eaten alone. Use "Other" if unclear.
 - protein: primary protein e.g. "Chicken", "Beef", "Tofu". Null if none.
 - prep_time_mins and cook_time_mins: integers in minutes, null if not stated.
 - notes: any useful tips, serving suggestions, or variations. Null if none.
