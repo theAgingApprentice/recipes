@@ -1,10 +1,10 @@
 # Business Requirements Document
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.2  
-**Date:** June 22, 2026  
-**Author:** MitchellNET  
-**Status:** Active — PR #4 in progress (item 6 next); UC-15 added
+**Version:** 1.3
+**Date:** June 23, 2026
+**Author:** MitchellNET
+**Status:** Active — PR #6 complete; UC-16, UC-17, dish_type, wishlist enhancement pending build
 
 ---
 
@@ -13,8 +13,9 @@
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | June 16, 2026 | Initial draft |
-| 1.1 | June 18, 2026 | Added UC-11 through UC-14 based on post-PR-#3 review; updated PR table; wishlist retention decision documented |
-| 1.2 | June 22, 2026 | Added UC-15 Cook Log — track each time a recipe is made, with optional rating (1–5) and optional per-cook notes; updated UC-02 and UC-08 accordingly |
+| 1.1 | June 18, 2026 | Added UC-11 through UC-14; updated PR table; wishlist retention decision documented |
+| 1.2 | June 22, 2026 | Added UC-15 Cook Log; updated UC-02 and UC-08 |
+| 1.3 | June 23, 2026 | Added UC-16 AI Meal Planning, UC-17 Recipe Linking; added dish_type field (auto-detected by Claude, admin-managed picklist); wishlist enhancement (un-flag prompt after first cook); admin section extended with dish_types and rejection_reasons managed lists; rejection reason pick list with on-the-spot Other entry |
 
 ---
 
@@ -48,232 +49,252 @@ Both users access the app from the home LAN only. No external access is required
 ## 3. Use Cases
 
 ### UC-01 — Browse Recipes
-**Actor:** Any user  
-**Description:** User opens the app and sees all recipes. Can scroll, search, and filter the list.  
+**Actor:** Any user
+**Description:** User opens the app and sees all recipes. Can scroll, search, and filter the list.
 **Acceptance criteria:**
 - All recipes visible in a clean list/card layout
-- Filter by cuisine type and protein
-- Each recipe shows: name, cuisine, protein, prep time
+- Filter by cuisine type, protein, and dish type
+- Each recipe shows: name, cuisine, protein, dish type, prep time
 - Delete button available per recipe on the browse page
 - Duplicates removed from migrated data
 
 ---
 
 ### UC-02 — View a Recipe
-**Actor:** Any user  
-**Description:** User clicks a recipe to see its full detail page.  
+**Actor:** Any user
+**Description:** User clicks a recipe to see its full detail page.
 **Acceptance criteria:**
-- Shows all stored metadata: name, source, cuisine, protein, prep time, cook time, notes
+- Shows all stored metadata: name, source, cuisine, protein, dish type, prep time, cook time, notes
 - Shows full ingredient list with quantities and categories
 - Shows cooking steps
 - Shows link back to original external source (opens in new tab)
 - Shows cook log summary (times made · average rating) at the top of the cook history section
-- Shows full cook log history below the summary: each entry shows date cooked, star rating (if set), and per-cook notes (if any)
+- Shows full cook log history below the summary
 - "We made this!" button visible on the detail page
 - Shows wishlist status with toggle
 - Shows prep-ahead flag with manual override toggle
+- Shows dish type
+- Shows linked recipes (if any) with link type notes
 
 ---
 
 ### UC-03 — Add a Recipe via URL
-**Actor:** Andrew  
-**Description:** Andrew pastes a URL into the app. The app fetches the page and uses AI (Claude API) to extract the recipe name, ingredients, steps, cuisine type, protein, prep time, and prep-ahead flag into structured fields. Andrew reviews, edits if needed, and saves.  
+**Actor:** Andrew
+**Description:** Andrew pastes a URL into the app. The app fetches the page and uses Claude API to extract structured recipe data including dish type. Andrew reviews, edits if needed, and saves.
 **Acceptance criteria:**
-- URL input field accessible from recipe browse page
-- App fetches and parses the URL server-side
-- Loading indicator shown while fetch + extraction is in progress
-- Claude API extracts structured recipe data from page content
-- Claude attempts to detect if recipe requires day-before prep (e.g. marinating overnight, dough resting)
-- Extracted data presented in an editable review form before saving
-- Duplicate check run at review time — if a likely duplicate is found, user is warned and can choose to save anyway or discard
-- Source URL stored and linked on the recipe detail page
-- Loading indicator shown while save is in progress
-- Handles fetch failures gracefully — falls back to manual entry form with error message
+- All existing UC-03 criteria met
+- Claude attempts to detect dish type (Main, Starter, Dessert, Side, Snack, Breakfast, Other)
+- Dish type shown as editable dropdown on review form (values from dish_types table)
+- Duplicate check run at review time
 
 ---
 
 ### UC-04 — Add a Recipe via Document Upload
-**Actor:** Andrew  
-**Description:** Andrew uploads a PDF or image of a recipe. The app uses Claude API to extract structured recipe data. Andrew reviews, edits if needed, and saves.  
+**Actor:** Andrew
+**Description:** Andrew uploads a PDF or image of a recipe. Claude extracts structured data including dish type.
 **Acceptance criteria:**
-- File upload accepts PDF and common image formats (JPG, PNG, WebP, GIF)
-- Loading indicator shown while extraction is in progress
-- Claude API extracts structured recipe data from document content
-- Claude attempts to detect prep-ahead requirement
-- Extracted data presented in an editable review form before saving
-- Duplicate check run at review time
-- Source noted as "Uploaded document" with filename stored
-- Existing `porkStroganoff.pdf` migrated using this flow
+- All existing UC-04 criteria met
+- Claude attempts to detect dish type
+- Dish type shown as editable dropdown on review form
 
 ---
 
 ### UC-05 — Add a Recipe Manually
-**Actor:** Andrew  
-**Description:** Andrew fills in a form directly to add a recipe (for cookbook references or recipes with no URL/document).  
+**Actor:** Andrew
+**Description:** Andrew fills in a form directly to add a recipe.
 **Acceptance criteria:**
-- Form fields: name, source description, source URL (optional), cuisine, protein, prep time, cook time, ingredients (list), steps (list), notes, prep-ahead flag
-- Cookbook references can be entered as: source = "Nagi cookbook", notes = "Page 39 — Bizarrely good chicken wings"
-- All fields except name are optional
+- All existing UC-05 criteria met
+- Dish type field added to form (dropdown from dish_types table, optional)
 
 ---
 
 ### UC-06 — Edit a Recipe
-**Actor:** Andrew  
-**Description:** Andrew edits any field of an existing recipe.  
+**Actor:** Andrew
+**Description:** Andrew edits any field of an existing recipe.
 **Acceptance criteria:**
-- Edit form pre-populated with existing data
-- All fields editable including prep-ahead flag
-- Save updates the record; cancel discards changes
+- All existing UC-06 criteria met
+- Dish type editable on edit form
+- Linked recipes visible and manageable on edit form (add link, remove link)
 
 ---
 
 ### UC-07 — Mark as Wishlist
-**Actor:** Any user  
-**Description:** User tags a recipe as "want to try someday."  
+**Actor:** Any user
+**Description:** User tags a recipe as "want to try someday."
 **Acceptance criteria:**
 - Wishlist toggle on recipe detail page
 - Wishlist filter on main browse page
 - Wishlist status persists in database
+- Wishlist recipes available as a selection pool for AI meal planning (UC-16)
 
-> **Note (June 2026):** The wishlist feature is retained as-is. A 1–5 star rating system exists on CookLog entries (per cook session). A recipe-level overall rating derived from CookLog is deferred until CookLog is in active use and the right aggregation approach is clear.
+> **Note (June 2026):** Wishlist is retained and enhanced. It becomes an AI meal planning input ("draw from wishlist items") and triggers an un-flag prompt after first cook (see UC-08).
 
 ---
 
 ### UC-08 — Record a Cook (entry point)
-**Actor:** Any user  
-**Description:** User confirms they are making (or have made) a recipe. This creates a new cook log entry dated today. Rating and notes are optional and can be added or edited afterwards.  
+**Actor:** Any user
+**Description:** User confirms they are making (or have made) a recipe. Creates a new cook log entry. If the recipe is on the wishlist, user is prompted to remove the wishlist flag.
 **Acceptance criteria:**
 - "We made this!" button on the recipe detail page and on the browse page (per-recipe row)
 - Pressing the button creates a new cook log entry with `cooked_on` defaulting to today
-- No rating or notes are required at this point — entry is saved immediately without a modal
-- User is returned to the recipe detail page where the new entry is visible in the cook log
-- Cook log summary on the detail page updates immediately (times made count increments)
-
----
-
-### UC-15 — Cook Log (view, edit, and delete)
-**Actor:** Any user  
-**Description:** Every time a recipe is made, a cook log entry is created (via UC-08). On the recipe detail page, the full cook log is visible. Each entry can be edited to add or update the date, rating, and notes. Entries can also be deleted.  
-**Acceptance criteria:**
-
-**Summary (top of cook log section on detail page):**
-- Shows "Made X times" count
-- Shows "Avg rating: Y.Y ★" if at least one entry has a rating; omitted if no entries have been rated
-- Shows "Last made: [date]" for the most recent cook entry
-
-**Full cook log (below summary on detail page):**
-- Each entry shows: date cooked, star rating (1–5, shown as ★ characters; blank if not yet rated), and per-cook notes (blank if none)
-- Entries listed in reverse chronological order (most recent first)
-- Each entry has an Edit button and a Delete button
-
-**Edit a cook log entry:**
-- Edit form pre-populated with existing date, rating, and notes
-- Date is editable (defaults to `cooked_on` value)
-- Rating is optional (1–5 stars; can be cleared)
-- Notes are optional free text
-- Save updates the entry; cancel discards changes
-
-**Delete a cook log entry:**
-- Confirmation required before delete (browser confirm dialog is acceptable)
-- Entry deleted; detail page reloads with updated summary and log
-- Deleting the only entry with a rating updates the average accordingly
-
-**Browse page:**
-- "We made this!" button visible per recipe row (see UC-08)
-- Cook count and average rating shown per recipe row (e.g. "Made 3 times · ★ 4.2")
+- No rating or notes required at this point
+- If the recipe has `wishlist = true`, user is shown a prompt: "This was on your wishlist — mark it as made and remove from wishlist?" with Yes / No options
+- If Yes: `wishlist` set to false, entry saved, user returned to detail page
+- If No: entry saved with wishlist flag unchanged, user returned to detail page
+- Cook log summary updates immediately
 
 ---
 
 ### UC-09 — Meal Plan
-**Actor:** Any user  
-**Description:** User selects recipes for each day of the upcoming week to build a meal plan.  
+**Actor:** Any user
+**Description:** User selects recipes for each day of the upcoming week to build a meal plan manually, or uses AI to suggest recipes (UC-16).
 **Acceptance criteria:**
-- Weekly calendar view (Mon–Sun)
-- Click to assign a recipe to a day
-- Each day shows the assigned recipe name
+- Weekly calendar view (Mon–Sun) with meal slots (breakfast, lunch, dinner, snack)
+- Click to assign a recipe to a day/slot manually
+- Each slot shows the assigned recipe name
 - Meal plan persists (survives page reload)
 - "Generate shopping list" button on meal plan page
+- "AI Suggest" button launches UC-16 flow
 
 ---
 
 ### UC-10 — Generate Shopping List
-**Actor:** Any user  
-**Description:** From a meal plan, user generates a combined shopping list for all recipes in the plan.  
+**Actor:** Any user
+**Description:** From a meal plan, user generates a combined shopping list for all recipes in the plan.
 **Acceptance criteria:**
 - Shopping list combines ingredients across all planned recipes
-- Duplicate ingredients aggregated (e.g. "garlic: 6 cloves" not "garlic: 2 cloves" × 3)
-- List grouped by category (Produce, Meat, Seafood, Dairy, Grains & Pasta, Canned & Jarred, Condiments & Sauces, Spices & Seasonings, Baking, Oils & Vinegars, Frozen, Beverages, Other)
+- Duplicate ingredients aggregated (quantities combined with +)
+- List grouped by category
 - Printable / copyable view
+- Export as .txt
 
 ---
 
 ### UC-11 — Duplicate Detection at Import
-**Actor:** Andrew  
-**Description:** When a recipe is imported (URL or document), the app checks whether a recipe with the same or similar name already exists before saving.  
-**Acceptance criteria:**
-- Exact name match always flagged as duplicate
-- Fuzzy name match (e.g. "Garlic Prawns" vs "Garlic Prawns (Shrimp)") flagged as likely duplicate
-- Warning shown on the review page before save — includes the name of the matching recipe and a link to it
-- User can choose to save anyway (if the duplicate is intentional) or discard
-- Does not block save — user decision is final
+*(unchanged from v1.2)*
 
 ---
 
 ### UC-12 — Prep-Ahead Flag
-**Actor:** Andrew / Claude  
-**Description:** Recipes that require work the day before (overnight marinating, resting dough, soaking, etc.) are flagged so users know to plan ahead.  
-**Acceptance criteria:**
-- Claude attempts to detect prep-ahead requirement during import and sets the flag automatically
-- Flag shown clearly on recipe detail page and browse list
-- User can manually toggle the flag on the review form and on the edit form
-- Flag persists in database
+*(unchanged from v1.2)*
 
 ---
 
 ### UC-13 — Loading Indicators During AI Operations
-**Actor:** Any user  
-**Description:** When the app is waiting for Claude API responses (URL extraction, document extraction) or saving a recipe, a loading indicator is shown so the user knows the app is working.  
-**Acceptance criteria:**
-- "Extracting recipe…" indicator shown from form submit until review page loads
-- "Saving…" indicator shown from save submit until redirect to recipe detail
-- Indicator disappears automatically on completion or error
-- No JavaScript frameworks required — vanilla JS acceptable
+*(unchanged from v1.2)*
 
 ---
 
 ### UC-14 — Delete Recipe
-**Actor:** Andrew  
-**Description:** Andrew can delete a recipe from the browse page.  
+*(unchanged from v1.2)*
+
+---
+
+### UC-15 — Cook Log (view, edit, and delete)
+*(unchanged from v1.2)*
+
+---
+
+### UC-16 — AI Meal Planning
+**Actor:** Any user
+**Description:** User asks the app to suggest recipes for a meal, a day, or a week. The user specifies planning criteria. Claude selects recipes and explains each pick. The user accepts or rejects each suggestion. Accepted suggestions populate the meal plan. All suggestions and accept/reject decisions are recorded for future learning.
+
+**Planning scope options:**
+- Single meal (one recipe for one slot)
+- Full day (breakfast + lunch + dinner, optionally with snack)
+- Full week (Mon–Sun, one or more slots per day)
+
+**Meal composition options:**
+- Mains only
+- Full meals (starter + main + dessert per dinner slot)
+
+**Selection criteria (user picks one or more):**
+- Most beloved (highest average cook log rating)
+- Longest since last ate (oldest `cooked_on` date or never cooked)
+- Most varied cuisine (avoid repeating cuisines across the plan)
+- Prep-ahead friendly (only recipes with `prep_ahead = false`, or user explicitly allows prep-ahead)
+- From wishlist (draw only from recipes with `wishlist = true`)
+- Surprise me (Claude picks freely with no constraint)
+
 **Acceptance criteria:**
-- Delete button visible per recipe on the browse page
-- Confirmation required before delete (browser confirm dialog is acceptable)
-- Recipe and all related records (ingredients, steps, cook logs) deleted via cascade
-- User returned to browse page after delete
+
+**Planning flow:**
+- "AI Suggest" button accessible from the meal plan page
+- User selects scope (meal / day / week), composition (mains only / full meals), and one or more criteria
+- Loading indicator shown while Claude generates suggestions
+- Claude returns a list of suggestions — each suggestion includes: recipe name, dish type, slot (day + meal slot), and a plain-English explanation of why it was chosen
+- Suggestions presented to user one at a time or as a reviewable list (implementation decision at build time)
+- User can accept or reject each suggestion individually
+- On reject: user is shown a rejection reason dropdown (values from `rejection_reasons` table, Other always last); if Other selected, a text input appears to enter a new reason — on submit the new reason is added to `rejection_reasons` and recorded
+- Accepted suggestions are written to the meal plan grid (same data as manual entry)
+- Rejected suggestions are recorded but do not affect the meal plan
+
+**Recording:**
+- Every suggestion recorded in `ai_suggestions` table: recipe_id, scope, criteria used, slot, Claude's explanation, accepted (boolean), rejection_reason_id (nullable), rejection_reason_text (for on-the-spot Other entries)
+- Data retained for future analysis of which suggestions are accepted/rejected and why
+
+**Constraints:**
+- Claude only selects from recipes already in the DB
+- Claude receives the full recipe list with cook log summary data (count, avg rating, last cooked) as context
+- Claude does not have access to external recipe sources during planning
+
+---
+
+### UC-17 — Recipe Linking
+**Actor:** Andrew
+**Description:** Andrew links two recipes that are intended to go together (e.g. a salad and a main that a cookbook recommends serving together). Links are visible on both recipe detail pages and manageable from both the detail page and the edit form.
+
+**Acceptance criteria:**
+
+**Viewing links:**
+- Recipe detail page shows a "Goes well with" section listing all linked recipes
+- Each linked recipe shows: name, dish type, and link notes (e.g. "Nagi cookbook p.42 — serve together")
+- Linked recipe name is a clickable link to its detail page
+
+**Adding links (detail page):**
+- "Link a recipe" button on the detail page opens an inline form
+- Form has: recipe search/dropdown (all recipes except current), optional notes field
+- On save: link created, detail page reloads showing the new link
+
+**Adding links (edit form):**
+- "Linked recipes" section on the edit form
+- Shows existing links with remove button per link
+- "Add link" inline form: recipe dropdown + notes field
+
+**Removing links:**
+- Remove button per link on both detail page and edit form
+- Confirmation required (browser confirm dialog)
+- Links are bidirectional — removing from either side removes the link
+
+**Bidirectionality:**
+- `recipe_links` table stores one row per link (recipe_id, linked_recipe_id) — queries check both directions
+- No duplicate links (A→B and B→A not both stored; one row covers both directions)
+
+---
+
+### UC-18 — Admin — Manage Picklists
+**Actor:** Andrew
+**Description:** Admin page allows Andrew to manage the cuisine, dish type, and rejection reason picklists used throughout the app.
+
+**Acceptance criteria:**
+- Admin page at `/recipes/admin/` accessible via "⚙ Admin" link in every page header
+- Three managed lists: Cuisines, Dish Types, Rejection Reasons
+- Each list shows current values, with Other always last
+- Each list has an "Add" form — new value added to DB on submit
+- If the name already exists (case-insensitive), silently ignored (no duplicate)
+- Rejection Reasons: when "Other" is selected during AI suggestion rejection (UC-16), the entered text is automatically added to this list for future use
 
 ---
 
 ## 4. Data to Migrate
 
-The following data from the existing static page must be migrated into the database at launch:
-
-- All ~50 recipe links from `recipes.html` (de-duplicated)
-- Physical cookbook references (Nagi cookbook pages)
-- `porkStroganoff.pdf` — import via UC-04 document upload flow
-
-Migration will be done via a one-time seed script run at deploy time.
+*(unchanged from v1.2 — 44 of 48 URLs imported; 6 cookbook references still need manual entry)*
 
 ---
 
 ## 5. Non-Functional Requirements
 
-| Requirement | Detail |
-|-------------|--------|
-| Access | LAN-only (`https://mitchellnet.local/recipes/`) |
-| Authentication | No per-user login — household access, same as fitness-tracker |
-| Performance | Page load < 2s for recipe list up to 500 recipes |
-| Availability | `restart: unless-stopped` — survives server reboots |
-| Data safety | MariaDB volume backed up via existing server backup process |
-| API key security | Claude API key stored in server `.env`, never in git |
+*(unchanged from v1.2)*
 
 ---
 
@@ -299,4 +320,8 @@ Migration will be done via a one-time seed script run at deploy time.
 - Cook log ratings and notes persist correctly and are editable after the fact
 - Cook summary (times made, average rating) displays correctly on detail and browse pages
 - Prep-ahead flag correctly detected for at least 80% of recipes where it applies
+- Dish type correctly detected by Claude for at least 80% of imported recipes
+- AI meal planning produces a suggestion set that the user accepts at least partially
+- Recipe links visible and manageable from both detail and edit views
+- Wishlist un-flag prompt appears correctly after first cook of a wishlist recipe
 - Partner can use the app without any instruction

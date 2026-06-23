@@ -1,9 +1,9 @@
 # High Level Architecture
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.2
-**Date:** June 22, 2026
-**Status:** Active — PR #4 in progress (item 6 next); cook log routes and templates added
+**Version:** 1.3
+**Date:** June 23, 2026
+**Status:** Active — PR #6 complete; dish_type, AI meal planning (UC-16), recipe linking (UC-17), admin extensions pending build
 
 ---
 
@@ -12,16 +12,17 @@
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | June 16, 2026 | Initial draft |
-| 1.1 | June 18, 2026 | Updated data model for prep_ahead flag; documented categorizer bug fix; added Claude API lessons learned; updated PR table |
-| 1.2 | June 22, 2026 | Added cook log routes, templates, and query helpers (UC-15); cook_logs table already present in v1.1 data model — no schema change needed; updated directory structure, route table, and PR plan |
+| 1.1 | June 18, 2026 | Updated data model for prep_ahead flag; categorizer bug fix; Claude API lessons learned; updated PR table |
+| 1.2 | June 22, 2026 | Added cook log routes, templates, and query helpers (UC-15) |
+| 1.3 | June 23, 2026 | Added dish_type field (auto-detected, admin-managed); UC-16 AI Meal Planning (new ai_plan route, ai_suggestions + rejection_reasons tables); UC-17 Recipe Linking (recipe_links table); admin extended with dish_types and rejection_reasons; wishlist un-flag prompt in cook log flow; extractor schema updated |
 
 ---
 
 ## 1. Overview
 
-The Recipes app is a Flask + MariaDB web application deployed as a Docker service on the MitchellNET server. It follows the `python-flask-db` service type established in `mitchellnet-infra/docs/SERVICE-TYPES.md` and mirrors the fitness-tracker architecture.
+The Recipes app is a Flask + MariaDB web application deployed as a Docker service on the MitchellNET server. It follows the `python-flask-db` service type and mirrors the fitness-tracker architecture.
 
-It is accessible at `https://mitchellnet.local/recipes/` over the LAN. The app uses the Claude API for AI-assisted recipe extraction from URLs and uploaded documents, and for shopping list ingredient categorization.
+Accessible at `https://mitchellnet.local/recipes/` over the LAN. Uses Claude API for recipe extraction, ingredient categorization, and AI meal planning.
 
 ---
 
@@ -32,60 +33,22 @@ Browser (Mac/iPhone on LAN)
         │
         │ HTTPS :443
         ▼
-   nginx-proxy  ──────────────────────────────────────────
-        │                                                  │
-        │ /recipes/                                        │ /fitness/, /api/bench/, etc.
-        ▼                                                  ▼
-  recipes-app:5000                              (other services unchanged)
-  (Flask + Gunicorn)
+   nginx-proxy
         │
-        │ TCP :3306
+        │ /recipes/  /meal-plan/  /shopping-list/
         ▼
-  recipes-db (MariaDB)
+  recipes-app:5000 (Flask + Gunicorn)
         │
-        ▼
-  recipes_data (Docker volume)
-
-  recipes-app also calls:
+        ├── TCP :3306 ──► recipes-db (MariaDB)
         │
-        │ HTTPS
-        ▼
-  api.anthropic.com  (Claude API — recipe extraction, ingredient categorization)
+        └── HTTPS ──────► api.anthropic.com (extraction, categorization, AI planning)
 ```
 
 ---
 
 ## 3. Service Architecture
 
-### 3.1 Repo
-
-Repo: `recipes`
-
-### 3.2 Containers
-
-| Container | Image | Role |
-|-----------|-------|------|
-| `recipes-app` | Custom Flask image | Web app + API |
-| `recipes-db` | `mariadb:11` | Relational data store |
-
-### 3.3 Networks
-
-| Network | Purpose |
-|---------|---------|
-| `mitchellnet` (external) | nginx-proxy to recipes-app |
-| `recipes-internal` (bridge) | recipes-app to recipes-db only |
-
-MariaDB is on the internal network only — never exposed to `mitchellnet`. This matches the fitness-tracker dual-network pattern.
-
-### 3.4 Volumes
-
-| Volume | Contents |
-|--------|----------|
-| `recipes_data` | MariaDB data files |
-
-### 3.5 Ports
-
-No host ports exposed. All traffic via Docker network.
+*(unchanged from v1.2 — two containers, two networks, one volume)*
 
 ---
 
@@ -93,64 +56,60 @@ No host ports exposed. All traffic via Docker network.
 
 ### 4.1 Stack
 
-| Layer | Technology |
-|-------|------------|
-| Language | Python 3.12 |
-| Web framework | Flask |
-| WSGI server | Gunicorn |
-| Database ORM | Flask-SQLAlchemy |
-| Migrations | Flask-Migrate (Alembic) |
-| HTTP client | requests (URL import) |
-| PDF parsing | PyMuPDF (fitz) |
-| AI extraction | Anthropic Python SDK |
-| Frontend | Vanilla HTML/CSS/JS (Jinja2 templates) |
+*(unchanged from v1.2)*
 
 ### 4.2 Directory Structure
 
 ```
 recipes/
 ├── app/
-│   ├── app.py               # Flask app init, blueprint registration
+│   ├── app.py
 │   ├── config/
-│   │   └── database.py      # SQLAlchemy + Flask-Migrate setup
+│   │   └── database.py
 │   ├── models/
-│   │   ├── recipe.py        # Recipe, Ingredient, Step, CookLog models
-│   │   └── meal_plan.py     # MealPlan, MealPlanEntry models
+│   │   ├── recipe.py        # Recipe, Ingredient, Step, CookLog, Cuisine, DishType models
+│   │   ├── meal_plan.py     # MealPlan, MealPlanEntry models
+│   │   └── admin.py         # RejectionReason model (NEW)
 │   ├── routes/
-│   │   ├── recipes.py       # Browse, view, add, edit, delete routes
-│   │   ├── cook_log.py      # Cook log routes: add entry, edit entry, delete entry
-│   │   ├── import_.py       # URL import, document upload, save routes
-│   │   ├── meal_plan.py     # Meal plan routes
-│   │   └── shopping.py      # Shopping list routes
+│   │   ├── recipes.py       # Browse, view, add, edit, delete
+│   │   ├── cook_log.py      # Cook log CRUD + wishlist un-flag prompt
+│   │   ├── import_.py       # URL import, document upload, save (dish_type added)
+│   │   ├── meal_plan.py     # Meal plan manual entry
+│   │   ├── shopping.py      # Shopping list
+│   │   ├── ai_plan.py       # AI meal planning (NEW — UC-16)
+│   │   ├── recipe_links.py  # Recipe linking (NEW — UC-17)
+│   │   └── admin.py         # Admin picklist management (extended)
 │   ├── services/
-│   │   ├── extractor.py     # Claude API — recipe extraction from text/documents
+│   │   ├── extractor.py     # Claude API — extraction (dish_type added to schema)
 │   │   ├── fetcher.py       # URL fetch + HTML cleaning
-│   │   └── categorizer.py   # Claude API — ingredient category assignment
+│   │   ├── categorizer.py   # Claude API — ingredient categorization
+│   │   └── ai_planner.py    # Claude API — meal planning suggestions (NEW)
 │   └── templates/
-│       ├── base.html
+│       ├── base.html        # ⚙ Admin link in header
 │       ├── recipes/
-│       │   ├── browse.html
-│       │   ├── detail.html          # Cook log summary + full log + edit/delete buttons
-│       │   └── form.html
+│       │   ├── browse.html  # dish_type filter + column added
+│       │   ├── detail.html  # dish_type, linked recipes section, wishlist un-flag prompt
+│       │   └── form.html    # dish_type dropdown, linked recipes section
 │       ├── import/
 │       │   ├── import.html
-│       │   └── review.html
+│       │   └── review.html  # dish_type dropdown added
 │       ├── cook_log/
-│       │   └── edit.html            # Edit a single cook log entry (date, rating, notes)
+│       │   └── edit.html
 │       ├── meal_plan/
+│       │   └── view.html    # "AI Suggest" button added
+│       ├── shopping/
 │       │   └── view.html
-│       └── shopping/
-│           └── view.html
+│       ├── ai_plan/         # NEW
+│       │   ├── form.html    # Scope / composition / criteria selection
+│       │   └── results.html # Suggestions list with accept/reject per item
+│       └── admin/
+│           └── index.html   # Extended: Cuisines + Dish Types + Rejection Reasons
 ├── database/
-│   └── init.sql
-├── migrations/              # Flask-Migrate generated
-├── tests/
-│   ├── test_health.py
-│   └── test_recipes.py
-├── requirements.txt
-├── .env.example
-├── docker-compose.yml
-└── README.md
+│   └── init.sql             # Updated with new tables
+├── docs/
+│   ├── recipes-BRD.md
+│   └── recipes-HLA.md
+└── ...
 ```
 
 ---
@@ -164,212 +123,321 @@ Recipe ──< Ingredient
 Recipe ──< Step
 Recipe ──< CookLog
 Recipe ──< MealPlanEntry >── MealPlan
+Recipe ──< AiSuggestion
+Recipe >── DishType
+Recipe ──< RecipeLink >── Recipe  (self-referential, bidirectional)
+Cuisine  (picklist)
+DishType (picklist)
+RejectionReason (picklist)
+AiSuggestion >── RejectionReason
 ```
 
 ### 5.2 Tables
 
-**recipes**
+**recipes** (updated)
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT PK | |
 | name | VARCHAR(255) | Required |
-| source_name | VARCHAR(255) | e.g. "RecipeTin Eats", "Nagi cookbook" |
-| source_url | TEXT | External URL (nullable) |
-| cuisine | VARCHAR(100) | e.g. "Thai", "Italian" |
-| protein | VARCHAR(100) | e.g. "Chicken", "Beef", "Seafood" |
-| prep_time_mins | INT | Nullable |
-| cook_time_mins | INT | Nullable |
-| notes | TEXT | Free text notes |
+| source_name | VARCHAR(255) | |
+| source_url | TEXT | |
+| cuisine | VARCHAR(100) | Free text; guided by cuisines picklist |
+| dish_type | VARCHAR(100) | NEW — e.g. "Main", "Starter"; guided by dish_types picklist |
+| protein | VARCHAR(100) | |
+| prep_time_mins | INT | |
+| cook_time_mins | INT | |
+| notes | TEXT | |
 | wishlist | BOOLEAN | Default false |
-| prep_ahead | BOOLEAN | Default false — Claude-detected or manually set |
-| prep_ahead_override | BOOLEAN | Default false — true if user has manually set the flag |
+| prep_ahead | BOOLEAN | Default false |
+| prep_ahead_override | BOOLEAN | Default false |
 | created_at | DATETIME | |
 | updated_at | DATETIME | |
 
-**ingredients**
+**cuisines** (existing)
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT PK | |
-| recipe_id | INT FK | |
-| name | VARCHAR(255) | e.g. "garlic" |
-| quantity | VARCHAR(100) | e.g. "3 cloves" |
-| category | VARCHAR(100) | e.g. "Produce", "Meat", "Pantry" |
-| sort_order | INT | Display order |
+| name | VARCHAR(100) UNIQUE | |
 
-**steps**
+**dish_types** (NEW)
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT PK | |
-| recipe_id | INT FK | |
-| step_number | INT | |
-| instruction | TEXT | |
+| name | VARCHAR(100) UNIQUE | Seeded: Breakfast, Starter, Main, Side, Dessert, Snack, Other |
 
-**cook_logs**
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INT PK | |
-| recipe_id | INT FK | |
-| cooked_on | DATE | |
-| rating | TINYINT | 1–5, nullable |
-| notes | TEXT | Per-cook notes, nullable |
+**ingredients** *(unchanged)*
 
-**meal_plans**
+**steps** *(unchanged)*
+
+**cook_logs** *(unchanged)*
+
+**meal_plans** *(unchanged)*
+
+**meal_plan_entries** *(unchanged)*
+
+**recipe_links** (NEW)
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT PK | |
-| week_start | DATE | Monday of the planned week |
+| recipe_id | INT FK | One side of the link |
+| linked_recipe_id | INT FK | Other side of the link |
+| notes | TEXT | Optional — e.g. "Nagi cookbook p.42 — serve together" |
 | created_at | DATETIME | |
 
-**meal_plan_entries**
+> Bidirectionality: one row stored per link pair. Queries use `WHERE recipe_id=X OR linked_recipe_id=X` to find all links for a recipe. A UNIQUE constraint on `(LEAST(recipe_id, linked_recipe_id), GREATEST(recipe_id, linked_recipe_id))` prevents A→B and B→A duplicates.
+
+**rejection_reasons** (NEW)
 | Column | Type | Notes |
 |--------|------|-------|
 | id | INT PK | |
-| meal_plan_id | INT FK | |
-| day_of_week | TINYINT | 0=Mon, 6=Sun |
-| recipe_id | INT FK | |
+| name | VARCHAR(255) UNIQUE | Seeded: Already planned recently, Too complex, Wrong cuisine, Missing ingredients, Not in the mood, Other |
+
+**ai_suggestions** (NEW)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | INT PK | |
+| recipe_id | INT FK | Suggested recipe |
+| meal_plan_id | INT FK | Target meal plan (nullable — suggestion may predate plan entry) |
+| scope | VARCHAR(20) | "meal", "day", or "week" |
+| composition | VARCHAR(20) | "mains_only" or "full_meals" |
+| criteria | TEXT | JSON array of criteria strings used |
+| day_of_week | TINYINT | 0=Mon, 6=Sun (nullable for single-meal scope) |
+| meal_slot | VARCHAR(20) | "breakfast", "lunch", "dinner", "snack" |
+| explanation | TEXT | Claude's plain-English reason for this pick |
+| accepted | BOOLEAN | True if user accepted, False if rejected, NULL if pending |
+| rejection_reason_id | INT FK | FK to rejection_reasons (nullable) |
+| rejection_reason_text | TEXT | Free text if user typed a new Other reason |
+| created_at | DATETIME | |
 
 ---
 
 ## 6. Claude API Integration
 
-### 6.1 Recipe Extraction (UC-03, UC-04)
+### 6.1 Recipe Extraction (UC-03, UC-04) — updated
 
-**Input:** Cleaned plain text (from URL fetch) or base64-encoded PDF/image
-**Output:** Structured JSON — name, ingredients list, steps list, cuisine, protein, prep time, cook time, notes, prep_ahead flag
-**Model:** `claude-sonnet-4-6`
-**max_tokens:** 4096 (1000 was too low for recipes with many ingredients — caused truncated JSON)
-**When called:** On URL import or document upload, before showing the review form
-**Failure mode:** If extraction fails or returns unparseable JSON, user is shown a flash error and returned to the import form
+**dish_type added to JSON schema:**
+```json
+{
+  "name": "...",
+  "cuisine": "...",
+  "dish_type": "Main",
+  "protein": "...",
+  "prep_time_mins": 15,
+  "cook_time_mins": 30,
+  "prep_ahead": false,
+  "notes": "...",
+  "ingredients": [...],
+  "steps": [...]
+}
+```
+
+**System prompt addition:**
+> Set `dish_type` to one of: Breakfast, Starter, Main, Side, Dessert, Snack, Other. Use "Main" for primary dinner/lunch dishes. Use "Starter" for appetisers and soups served before a main. Use "Side" for accompaniments not eaten alone. Use "Other" if unclear.
+
+All other extraction parameters unchanged (model: `claude-sonnet-4-6`, max_tokens: 4096).
 
 ### 6.2 Ingredient Categorization (UC-10)
 
-**Input:** List of `{sort_order, name}` dicts
-**Output:** List of `{sort_order, category}` dicts
-**Model:** `claude-sonnet-4-6`
-**When called:** After recipe save, as a best-effort background step
-**Caching:** Category stored in the `ingredients` table — only uncategorized ingredients need re-categorization
-**Important:** Categorizer must use its own direct Anthropic API call with its own system prompt. It must NOT reuse `extractor.call_claude()` — that function uses the recipe extraction system prompt, which is wrong for categorization. Fixed in PR #4.
+*(unchanged from v1.2)*
 
 ### 6.3 Prep-Ahead Detection (UC-12)
 
-**Input:** Recipe text (same payload as extraction)
-**Output:** Boolean `prep_ahead` field in the extraction JSON
-**When called:** During extraction — the extractor system prompt instructs Claude to set `prep_ahead: true` if the recipe contains any overnight or day-before steps (marinating, dough resting, soaking, chilling)
-**Override:** User can manually toggle on review form and edit form; override stored in `prep_ahead_override` column
+*(unchanged from v1.2)*
 
 ### 6.4 Duplicate Detection (UC-11)
 
-**Approach:** Python-only, no Claude API call needed
-**Method:** On import, query all existing recipe names and compare using exact match (case-insensitive) and fuzzy match via `difflib.SequenceMatcher` — threshold 0.8 similarity flagged as likely duplicate
-**When:** Check run server-side when review form is first rendered, before user saves
-**Result:** Duplicate warning injected into review page if match found; user can save anyway or discard
+*(unchanged from v1.2)*
 
-### 6.5 API Key
+### 6.5 AI Meal Planning (UC-16) — NEW
 
-Stored in `~/services/recipes/.env` as `ANTHROPIC_API_KEY`. Never committed to git.
+**File:** `app/services/ai_planner.py`
+
+**Input to Claude:**
+```json
+{
+  "scope": "week",
+  "composition": "mains_only",
+  "criteria": ["most_beloved", "varied_cuisine"],
+  "recipes": [
+    {
+      "id": 5,
+      "name": "Garlic Prawns",
+      "cuisine": "Italian",
+      "dish_type": "Main",
+      "protein": "Seafood",
+      "prep_ahead": false,
+      "wishlist": false,
+      "cook_count": 3,
+      "avg_rating": 4.7,
+      "last_cooked": "2026-06-10"
+    },
+    ...
+  ],
+  "slots_needed": [
+    {"day": 0, "slot": "dinner"},
+    {"day": 1, "slot": "dinner"},
+    ...
+  ]
+}
+```
+
+**Output from Claude (JSON):**
+```json
+{
+  "suggestions": [
+    {
+      "day_of_week": 0,
+      "meal_slot": "dinner",
+      "recipe_id": 5,
+      "recipe_name": "Garlic Prawns",
+      "explanation": "Highest rated recipe you haven't made in over two weeks — a reliable crowd-pleaser to start the week."
+    },
+    ...
+  ]
+}
+```
+
+**Model:** `claude-sonnet-4-6`
+**max_tokens:** 2048 (structured JSON output, smaller than extraction)
+**System prompt:** Instructs Claude to act as a meal planner, select only from the provided recipe list, apply the specified criteria, and return valid JSON only — no preamble or markdown fences.
+
+**Failure mode:** If Claude returns unparseable JSON, flash an error and return user to the planning form. Do not partially save suggestions.
 
 ---
 
 ## 6.6 Cook Log Routes (UC-08, UC-15)
 
-No Claude API involvement. All cook log operations are standard Flask + SQLAlchemy CRUD.
+### Wishlist Un-Flag Prompt (UC-08 enhancement)
 
-### Routes
+After `POST /recipes/<id>/cook` creates a cook log entry, if `recipe.wishlist == True`:
+- Redirect to a lightweight confirmation page (or use a query param on the detail page) asking "This was on your wishlist — remove it from wishlist?"
+- `POST /recipes/<id>/unwishlist` — sets `wishlist = False`, redirects to detail page
+- "Keep on wishlist" link — redirects to detail page without change
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/recipes/<id>/cook` | Create a new cook log entry for today; redirects to detail page |
-| GET | `/cook-log/<log_id>/edit` | Render edit form pre-populated with existing entry |
-| POST | `/cook-log/<log_id>/edit` | Save edits to date, rating, and notes |
-| POST | `/cook-log/<log_id>/delete` | Delete the entry after confirmation; redirects to detail page |
-
-All routes registered on the `cook_log` blueprint in `app/routes/cook_log.py` and registered in `app/app.py`.
-
-### Detail Page Cook Log Section (recipes/detail.html)
-
-**Summary block** (always shown if at least one cook log entry exists):
-- "Made X times"
-- "Avg rating: Y.Y ★" — computed in Python from `cook_log` entries where `rating IS NOT NULL`; omitted if no entries have a rating
-- "Last made: [date]" — most recent `cooked_on` value
-
-**Full log table** (reverse chronological):
-- Columns: Date | Rating | Notes | Actions
-- Rating displayed as filled ★ characters (e.g. ★★★☆☆ for 3); blank cell if not set
-- Edit and Delete buttons per row; Delete triggers `confirm()` dialog
-
-**"We made this!" button** on the detail page submits a POST to `/recipes/<id>/cook`.
-
-### Browse Page (recipes/browse.html)
-
-- "We made this!" button per recipe row — POST to `/recipes/<id>/cook`
-- Cook summary shown per row: "Made X times" and "★ Y.Y" (average) — queried efficiently via a single joined query or subquery to avoid N+1; omitted if never cooked
-
-### Query Helper
-
-Add a helper to `app/models/recipe.py` (or a `@property` on the `Recipe` model) to compute cook summary data:
-
-```python
-@property
-def cook_summary(self):
-    logs = self.cook_logs
-    count = len(logs)
-    rated = [l.rating for l in logs if l.rating is not None]
-    avg = round(sum(rated) / len(rated), 1) if rated else None
-    last = max((l.cooked_on for l in logs), default=None)
-    return {"count": count, "avg_rating": avg, "last_cooked": last}
-```
+Alternatively implement as a flash message + inline form on the detail page to avoid an extra route — implementation decision at build time.
 
 ---
 
-## 7. NGINX Integration
+## 7. Routes Summary
 
-Location block in `InternalWebServer/nginx/conf.d/prod.conf` and `000-bareip.conf`:
+### New routes (v1.3)
+
+| Blueprint | Method | Path | Description |
+|-----------|--------|------|-------------|
+| `ai_plan` | GET | `/ai-plan/` | Planning scope/criteria form |
+| `ai_plan` | POST | `/ai-plan/suggest` | Call Claude, render suggestions |
+| `ai_plan` | POST | `/ai-plan/accept/<suggestion_id>` | Accept suggestion → write to meal plan |
+| `ai_plan` | POST | `/ai-plan/reject/<suggestion_id>` | Reject suggestion → record reason |
+| `recipe_links` | POST | `/recipes/<id>/links/add` | Add a link between two recipes |
+| `recipe_links` | POST | `/recipe-links/<link_id>/remove` | Remove a link |
+| `recipes` | POST | `/recipes/<id>/unwishlist` | Remove wishlist flag after cook |
+| `admin` | GET/POST | `/admin/dish-types/add` | Add a dish type |
+| `admin` | GET/POST | `/admin/rejection-reasons/add` | Add a rejection reason |
+
+### NGINX — new location blocks needed
+
+`/ai-plan/` is a new secondary prefix on `recipes-app`. Must be added to **both** `prod.conf` and `000-bareip.conf` per the Bare-IP Parity Standard:
 
 ```nginx
-location /recipes/ {
-    proxy_pass http://recipes-app:5000/;
+location /ai-plan/ {
+    include conf.d/security-headers.conf;
+    proxy_pass http://recipes-app:5000;
     proxy_http_version 1.1;
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
     add_header X-Upstream recipes-app;
 }
 ```
 
-Trailing slash on `proxy_pass` strips the `/recipes/` prefix before forwarding to Flask (Approach A). See `InternalWebServer/docs/nginx-routing.md` for full pattern documentation.
+> **120s timeout:** Claude API calls for meal planning may take several seconds, especially for a full week plan across a large recipe library. Match the BIS timeout pattern.
+
+`/recipe-links/` is also a new secondary prefix — same pattern, standard 60s timeout is fine.
 
 ---
 
-## 8. Migration Plan
+## 8. DB Migrations Required (v1.3)
 
-A one-time seed script will:
+Run on live server before deploying code that uses these tables:
 
-1. Parse all links from the existing `recipes.html`
-2. De-duplicate entries (same URL appearing multiple times)
-3. Insert each as a `Recipe` record with `source_url` and `name` populated
-4. Set `cuisine`, `protein`, `prep_time_mins` to NULL (to be filled in over time via edit)
-5. Handle cookbook references as recipes with `source_url = NULL` and `notes` = page reference
-6. Mark all migrated recipes with `wishlist = false`, `prep_ahead = false`
+```sql
+-- 1. dish_type column on recipes
+ALTER TABLE recipes ADD COLUMN dish_type VARCHAR(100) NULL AFTER cuisine;
 
-The `porkStroganoff.pdf` will be imported manually via the document upload UI after launch.
+-- 2. dish_types picklist table
+CREATE TABLE dish_types (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL UNIQUE
+);
+INSERT INTO dish_types (name) VALUES
+  ('Breakfast'),('Dessert'),('Main'),('Side'),('Snack'),('Starter'),('Other');
+
+-- 3. recipe_links table
+CREATE TABLE recipe_links (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  linked_recipe_id INT NOT NULL,
+  notes TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  FOREIGN KEY (linked_recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_link_pair (
+    (LEAST(recipe_id, linked_recipe_id)),
+    (GREATEST(recipe_id, linked_recipe_id))
+  )
+);
+
+-- 4. rejection_reasons table
+CREATE TABLE rejection_reasons (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL UNIQUE
+);
+INSERT INTO rejection_reasons (name) VALUES
+  ('Already planned recently'),('Missing ingredients'),('Not in the mood'),
+  ('Too complex'),('Wrong cuisine'),('Other');
+
+-- 5. ai_suggestions table
+CREATE TABLE ai_suggestions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  meal_plan_id INT NULL,
+  scope VARCHAR(20) NOT NULL,
+  composition VARCHAR(20) NOT NULL,
+  criteria TEXT NOT NULL,
+  day_of_week TINYINT NULL,
+  meal_slot VARCHAR(20) NULL,
+  explanation TEXT,
+  accepted BOOLEAN NULL,
+  rejection_reason_id INT NULL,
+  rejection_reason_text TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL,
+  FOREIGN KEY (rejection_reason_id) REFERENCES rejection_reasons(id) ON DELETE SET NULL
+);
+```
+
+Also update `database/init.sql` with all new tables so fresh installs are consistent.
 
 ---
 
-## 9. Deployment
+## 9. PR Plan (updated)
 
-Follows standard MitchellNET pattern:
-
-- GitHub Actions self-hosted runner on the server
-- On merge to `main`: build image, run tests, deploy via `docker compose up -d`
-- Health check: `GET /api/health` returns `{"status": "healthy", "database": "connected"}`
-- Server-side `.env` at `~/services/recipes/.env`
+| Repo | PR | Status | What |
+|------|----|--------|------|
+| `recipes` | #28 | ✅ Done | Fix shopping list ingredient aggregation |
+| `recipes` | #29 | ✅ Done | Dynamic cuisine list from DB + admin page |
+| `recipes` | #7 | Planned | dish_type field — DB migration, extractor schema, model, routes, templates, admin section |
+| `recipes` | #8 | Planned | AI meal planning (UC-16) — ai_planner service, ai_plan routes, templates, NGINX blocks, rejection_reasons table, ai_suggestions table |
+| `recipes` | #9 | Planned | Recipe linking (UC-17) — recipe_links table, recipe_links routes, detail + form template updates |
+| `recipes` | #10 | Planned | Wishlist un-flag prompt (UC-08 enhancement) |
+| `recipes` | #11 | Planned | 6 cookbook recipe manual entries (data, not code) |
+| `InternalWebServer` | — | Planned (with PR #8) | Add /ai-plan/ and /recipe-links/ location blocks to prod.conf + 000-bareip.conf |
 
 ---
 
 ## 10. Lessons Learned
 
-| # | Lesson | Detail |
-|---|--------|--------|
-| 1 | `max_tokens` must be generous | Set to 1000 initially — caused truncated JSON for recipes with many ingredients. Now 4096. |
-| 2 | Do not share Claude API call functions across services with different system prompts | `categorizer.py` initially called `extractor.call_claude()`, which used the recipe extraction system prompt. Categorizer needs its own API call with its own system prompt. |
-| 3 | `curl` smoke tests on server need `-k` flag | `mitchellnet.local` uses a self-signed cert. Always use `curl -sk` when testing HTTPS endpoints from the server itself. |
+*(unchanged from v1.2 — see § 10 in previous version)*
 
 ---
 
@@ -377,30 +445,9 @@ Follows standard MitchellNET pattern:
 
 | # | Question | Impact |
 |---|----------|--------|
-| 1 | Should the weekly meal plan support multiple meals per day (lunch + dinner)? | Data model change if yes |
+| 1 | Should the weekly meal plan support multiple meals per day (lunch + dinner)? | Already supported by meal_slot — UI decision only |
 | 2 | Should uploaded documents be stored permanently or discarded after extraction? | Storage volume sizing |
-| 3 | Should the shopping list be exportable (email, text file)? | Additional routes needed |
-| 4 | Should cuisine and protein be free-text or constrained picklists? | UI complexity |
-| 5 | Should recipe-level rating be derived from CookLog average, or a separate field? | Deferred until CookLog is in active use |
-
----
-
-## 12. PRs Completed / Planned
-
-| Repo | PR | Status | What |
-|------|----|--------|------|
-| `recipes` | #1 | Done | Initial scaffold — flask-db template, schema, health check |
-| `recipes` | #2 | Done | Core models and browse/detail/add/edit routes |
-| `recipes` | #16 | Done | Claude API import (URL + document upload) |
-| `recipes` | #17 | Done | Fix max_tokens 1000 to 4096 |
-| `recipes` | #19 | Done | Fix categorizer.py — own API call + own system prompt |
-| `recipes` | #20 | Done | Loading indicator on URL-import and file-upload forms |
-| `recipes` | #21 | Done | Loading indicator on save form (review page) |
-| `recipes` | #22 | Done | Delete button on browse page (cascade, confirm dialog) |
-| `recipes` | #23 | Done | Duplicate detection at import (difflib, threshold 0.8) |
-| `recipes` | #4 (item 6) | Next | Prep-ahead flag — DB migration + extractor schema + UI toggles |
-| `recipes` | #5 | Planned | Cook log — add/edit/delete entries, summary + full log on detail, button on browse |
-| `recipes` | #6 | Planned | Meal plan + shopping list |
-| `recipes` | #7 | Planned | Seed script + data migration |
-| `InternalWebServer` | — | Planned | Add /recipes/ location block, remove static recipes.html |
-| `mitchellnet-infra` | — | Planned | ARCHITECTURE.md update |
+| 3 | Should the shopping list be exportable via email? | Additional routes needed |
+| 4 | Should recipe-level rating be derived from CookLog average, or a separate field? | Deferred until CookLog is in active use |
+| 5 | Should the wishlist un-flag prompt appear after every cook, or only the first cook? | Currently spec'd as first cook only (wishlist=true check) — naturally stops after first un-flag |
+| 6 | For AI planning full-meals mode, should Claude pick starter + main + dessert as a set, or allow user to accept/reject each component independently? | UX decision at build time |
