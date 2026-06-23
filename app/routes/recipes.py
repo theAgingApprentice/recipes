@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for
 from config.database import db
-from models.recipe import Recipe, Ingredient, Step
+from models.recipe import Recipe, Ingredient, Step, Cuisine
 
 recipes_bp = Blueprint("recipes", __name__, template_folder="../templates")
 
-CUISINES = ["American", "Asian", "Italian", "Mediterranean", "Mexican", "Other"]
 PROTEINS = ["Beef", "Chicken", "Fish", "Pork", "Vegan", "Vegetarian", "Other"]
 
 
@@ -24,7 +23,7 @@ def browse():
     return render_template(
         "recipes/browse.html",
         recipes=recipes,
-        cuisines=CUISINES,
+        cuisines=Cuisine.ordered(),
         proteins=PROTEINS,
         filters={"cuisine": cuisine, "protein": protein, "wishlist": wishlist},
     )
@@ -46,7 +45,7 @@ def add():
         _save_steps(r)
         db.session.commit()
         return redirect(f"/recipes/{r.id}")
-    return render_template("recipes/form.html", recipe=None, cuisines=CUISINES, proteins=PROTEINS)
+    return render_template("recipes/form.html", recipe=None, cuisines=Cuisine.ordered(), proteins=PROTEINS)
 
 
 @recipes_bp.route("/<int:recipe_id>/edit", methods=["GET", "POST"])
@@ -63,7 +62,7 @@ def edit(recipe_id):
         _save_steps(r)
         db.session.commit()
         return redirect(f"/recipes/{r.id}")
-    return render_template("recipes/form.html", recipe=r, cuisines=CUISINES, proteins=PROTEINS)
+    return render_template("recipes/form.html", recipe=r, cuisines=Cuisine.ordered(), proteins=PROTEINS)
 
 
 @recipes_bp.route("/<int:recipe_id>/delete", methods=["POST"])
