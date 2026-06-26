@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}AI Meal Planning — Recipes{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <h1>AI Meal Planning</h1>
+  <a href="/meal-plan/" class="btn btn-secondary">← Back to Meal Plan</a>
+</div>
+
+<div class="card">
+  <form method="post" action="/ai-plan/suggest">
+
+    <div class="form-group">
+      <label style="font-weight:600;">Planning scope</label>
+      <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.3rem;">
+        <label style="font-weight:normal;"><input type="radio" name="scope" value="meal" checked> Single meal (one recipe)</label>
+        <label style="font-weight:normal;"><input type="radio" name="scope" value="day"> Full day (breakfast, lunch, dinner)</label>
+        <label style="font-weight:normal;"><input type="radio" name="scope" value="week"> Full week (dinner Mon–Sun)</label>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label style="font-weight:600;">Meal composition</label>
+      <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.3rem;">
+        <label style="font-weight:normal;"><input type="radio" name="composition" value="mains_only" checked> Mains only</label>
+        <label style="font-weight:normal;"><input type="radio" name="composition" value="full_meals"> Full meals (starter + main + dessert for dinner slots)</label>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label style="font-weight:600;">Selection criteria <span style="font-weight:normal; color:#666;">(pick one or more)</span></label>
+      <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.3rem;">
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="most_beloved"> Most beloved (highest average cook log rating)</label>
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="longest_since"> Longest since last ate</label>
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="varied_cuisine"> Most varied cuisine</label>
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="prep_ahead"> Prep-ahead friendly</label>
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="from_wishlist"> From wishlist</label>
+        <label style="font-weight:normal;"><input type="checkbox" name="criteria" value="surprise_me"> Surprise me</label>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label style="font-weight:600;">Add to meal plan <span style="font-weight:normal; color:#666;">(optional)</span></label>
+      <select name="meal_plan_id" style="width:auto; max-width:300px; margin-top:0.3rem;">
+        <option value="">— Don't add to a plan —</option>
+        {% for mp in meal_plans %}
+        <option value="{{ mp.id }}">Week of {{ mp.week_start.strftime('%b %d, %Y') }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="margin-top:1.25rem;">
+      <button type="submit" class="btn btn-primary">✨ Get Suggestions</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

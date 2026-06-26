@@ -43,4 +43,24 @@
     <button type="submit" class="btn btn-primary">Add</button>
   </form>
 </div>
+<div class="card" style="margin-top:1rem;">
+  <h2>Rejection Reasons</h2>
+  <p style="color:#555; font-size:0.9rem; margin-bottom:1rem;">
+    {{ rejection_reasons|length }} reasons · used as the picklist when rejecting AI meal plan suggestions. Other is always last and cannot be removed.
+  </p>
+  <table style="margin-bottom:1rem;">
+    <thead>
+      <tr><th>Name</th></tr>
+    </thead>
+    <tbody>
+      {% for rr in rejection_reasons %}
+      <tr><td>{{ rr.name }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="/recipes/admin/rejection-reasons/add" style="display:flex; gap:0.5rem; align-items:center;">
+    <input type="text" name="name" placeholder="New rejection reason" style="width:260px;">
+    <button type="submit" class="btn btn-primary">Add</button>
+  </form>
+</div>
 {% endblock %}

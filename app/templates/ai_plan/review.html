@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Review AI Suggestions — Recipes{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <h1>AI Suggestions</h1>
+  <a href="/ai-plan/suggest" class="btn btn-secondary">← New Request</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="card" style="margin-bottom:0.75rem; border-left:4px solid
+        {% if category == 'success' %}#16a34a{% elif category == 'danger' %}#dc2626{% else %}#2563eb{% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if not suggestions %}
+  <div class="empty">No suggestions to review.</div>
+{% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Recipe</th>
+        <th>Dish Type</th>
+        <th>Slot</th>
+        <th>Why chosen</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in suggestions %}
+      <tr>
+        <td><a href="/recipes/{{ s.recipe_id }}">{{ s.recipe.name }}</a></td>
+        <td>{{ s.recipe.dish_type or '—' }}</td>
+        <td style="font-size:0.82rem; color:#555;">
+          {% if s.day_of_week is not none and s.meal_slot %}
+            {{ days[s.day_of_week] }} · {{ s.meal_slot }}
+          {% elif s.meal_slot %}
+            {{ s.meal_slot }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td style="font-size:0.85rem; color:#444;">{{ s.explanation or '—' }}</td>
+        <td>
+          {% if s.accepted is none %}
+            <span class="badge">Pending</span>
+          {% elif s.accepted %}
+            <span class="badge badge-green">Accepted</span>
+          {% else %}
+            <span class="tag">Rejected</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.accepted is none %}
+          <form method="post" action="/ai-plan/accept/{{ s.id }}" style="display:inline;">
+            <input type="hidden" name="ids" value="{{ ids }}">
+            <button type="submit" class="btn btn-primary btn-sm">✓ Accept</button>
+          </form>
+          <form method="post" action="/ai-plan/reject/{{ s.id }}" style="display:inline-block; margin-top:0.4rem;">
+            <input type="hidden" name="ids" value="{{ ids }}">
+            <select name="rejection_reason_id" style="font-size:0.8rem; width:auto; margin-bottom:0.3rem;">
+              <option value="">— Reason —</option>
+              {% for r in rejection_reasons %}
+                {% if r.name != 'Other' %}
+                  <option value="{{ r.id }}">{{ r.name }}</option>
+                {% endif %}
+              {% endfor %}
+              {% for r in rejection_reasons %}
+                {% if r.name == 'Other' %}
+                  <option value="{{ r.id }}">Other</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <input type="text" name="rejection_reason_text" placeholder="Other reason (optional)"
+                   style="font-size:0.8rem; width:180px; margin-bottom:0.3rem;">
+            <button type="submit" class="btn btn-secondary btn-sm">✗ Reject</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top:1rem;" class="actions">
+    <a href="/meal-plan/" class="btn btn-secondary">→ Go to Meal Plan</a>
+    <a href="/ai-plan/suggest" class="btn btn-secondary">✨ New Request</a>
+  </div>
+{% endif %}
+{% endblock %}
