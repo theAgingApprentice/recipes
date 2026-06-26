@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS dish_types (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO dish_types (name) VALUES
   ('Breakfast'), ('Dessert'), ('Main'), ('Side'), ('Snack'), ('Starter'), ('Other');
 
@@ -88,4 +89,35 @@ CREATE TABLE IF NOT EXISTS meal_plan_entries (
   recipe_id INT NOT NULL,
   FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
   FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS rejection_reasons (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO rejection_reasons (name) VALUES
+  ('Not in the mood'),
+  ('Too complex'),
+  ('Missing ingredients'),
+  ('Recently eaten'),
+  ('Other');
+
+CREATE TABLE IF NOT EXISTS ai_suggestions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipe_id INT NOT NULL,
+  meal_plan_id INT,
+  scope VARCHAR(20) NOT NULL,
+  composition VARCHAR(20) NOT NULL,
+  criteria TEXT,
+  day_of_week TINYINT,
+  meal_slot VARCHAR(20),
+  explanation TEXT,
+  accepted BOOLEAN,
+  rejection_reason_id INT,
+  rejection_reason_text VARCHAR(255),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL,
+  FOREIGN KEY (rejection_reason_id) REFERENCES rejection_reasons(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
