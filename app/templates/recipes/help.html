@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Help — Recipes{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <h1>Help</h1>
+  <a href="/recipes/" class="btn btn-secondary">← Back to Recipes</a>
+</div>
+
+<div class="card" style="margin-bottom:1rem;">
+  <input type="text" id="help-search" placeholder="Search help…" style="width:100%; font-size:1rem; padding:0.5rem 0.75rem;">
+</div>
+
+<div id="help-sections">
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Browsing &amp; Searching Recipes</h2>
+    <p style="margin-top:0.5rem;">The main page at <a href="/recipes/">/recipes/</a> shows all recipes in alphabetical order. Use the filter bar at the top to narrow by cuisine, protein, or dish type. Tick <strong>Wishlist only</strong> to see recipes you want to try. The search filters update the list immediately without reloading the page.</p>
+    <p style="margin-top:0.5rem;">Click any recipe name to open its full detail page, where you can see ingredients, steps, cook history, and linked recipes.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Adding a Recipe — URL Import</h2>
+    <p style="margin-top:0.5rem;">Click <strong>⬇ Import</strong> on the browse page. Paste the URL of a recipe page and click <strong>Fetch &amp; Extract</strong>. The app fetches the page and uses Claude AI to extract the recipe details automatically.</p>
+    <p style="margin-top:0.5rem;">Review the extracted data on the review screen — edit any field before saving. Pay attention to the dish type and cuisine dropdowns, which Claude pre-fills but you can override.</p>
+    <p style="margin-top:0.5rem;">A duplicate check runs at review time. If the same recipe name already exists you will be warned before saving.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Adding a Recipe — Document Upload</h2>
+    <p style="margin-top:0.5rem;">Click <strong>⬇ Import</strong> then choose the <strong>Upload a file</strong> tab. Upload a PDF or image of a recipe. Claude extracts the structured data the same way as URL import.</p>
+    <p style="margin-top:0.5rem;">If the upload fails with a size error, rasterize the PDF to a compressed JPEG first — NGINX currently limits uploads to around 1 MB.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Adding a Recipe — Manual Entry</h2>
+    <p style="margin-top:0.5rem;">Click <strong>+ Add Recipe</strong> on the browse page to open the manual entry form. Fill in as many fields as you have — only the recipe name is required. Ingredients and steps can be added with the <strong>+ Add ingredient</strong> and <strong>+ Add step</strong> buttons.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Editing &amp; Deleting Recipes</h2>
+    <p style="margin-top:0.5rem;">Open a recipe's detail page and click <strong>Edit</strong> to change any field, update ingredients or steps, or adjust the dish type and cuisine.</p>
+    <p style="margin-top:0.5rem;">To delete a recipe, click <strong>Delete</strong> on the browse page row or on the detail page. Deletion is permanent and removes all associated ingredients, steps, and cook log entries.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Cook Log</h2>
+    <p style="margin-top:0.5rem;">Click <strong>We made this!</strong> on a recipe's detail page or browse row to record a cook. A new log entry is created with today's date. You can add a rating (1–5) and notes afterwards by clicking the entry in the cook history section of the detail page.</p>
+    <p style="margin-top:0.5rem;">If the recipe is on your wishlist, you will be prompted to remove the wishlist flag when you record the first cook.</p>
+    <p style="margin-top:0.5rem;">The cook summary at the top of the detail page shows the total number of times made and the average rating across all cook log entries.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Wishlist</h2>
+    <p style="margin-top:0.5rem;">Toggle the <strong>Wishlist</strong> flag on any recipe's detail page to mark it as something you want to try. Filter the browse page by <strong>Wishlist only</strong> to see your list.</p>
+    <p style="margin-top:0.5rem;">Wishlist recipes can be used as the selection pool for AI meal planning — choose <strong>From wishlist</strong> as a planning criterion to draw only from wishlist recipes.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Meal Planning — Manual</h2>
+    <p style="margin-top:0.5rem;">Go to <a href="/meal-plan/">Meal Plan</a> to see the weekly grid. Use the dropdowns to assign a recipe to any day and meal slot (breakfast, lunch, dinner, snack). Click <strong>Save Plan</strong> to persist your selections.</p>
+    <p style="margin-top:0.5rem;">Use the <strong>← Prev</strong> and <strong>Next →</strong> arrows to navigate between weeks. Each week is stored separately.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Meal Planning — AI Suggestions</h2>
+    <p style="margin-top:0.5rem;">Click <strong>✨ AI Suggest</strong> on the meal plan page to open the AI planning form. Choose a scope (single meal, full day, or full week), a composition (mains only or full meals), and one or more selection criteria.</p>
+    <p style="margin-top:0.5rem;">Available criteria: <strong>Most beloved</strong> (highest rated), <strong>Longest since last ate</strong>, <strong>Most varied cuisine</strong>, <strong>Prep-ahead friendly</strong>, <strong>From wishlist</strong>, or <strong>Surprise me</strong>.</p>
+    <p style="margin-top:0.5rem;">Claude generates a list of suggestions drawn only from recipes already in the app. Review the suggestions and accept or reject each one individually. Accepted suggestions are added to the selected meal plan. Rejected suggestions are recorded with an optional reason for future reference.</p>
+    <p style="margin-top:0.5rem;">Optionally select a meal plan from the dropdown before generating — accepted suggestions will be written directly into that plan.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Shopping List</h2>
+    <p style="margin-top:0.5rem;">From the meal plan page, click <strong>→ Shopping List</strong> to generate a combined ingredient list for all recipes in the current week's plan. Ingredients are grouped by category and quantities are aggregated across recipes.</p>
+    <p style="margin-top:0.5rem;">The shopping list can be exported as a plain text file using the <strong>Export .txt</strong> button.</p>
+  </div>
+
+  <div class="card help-section" style="margin-bottom:1rem;">
+    <h2>Admin — Managing Picklists</h2>
+    <p style="margin-top:0.5rem;">Click <strong>⚙ Admin</strong> (top right of every page) to manage the cuisine, dish type, and rejection reason picklists used throughout the app.</p>
+    <p style="margin-top:0.5rem;">Each list shows current values. Use the <strong>Add</strong> form at the bottom of each section to add a new value. Duplicates are silently ignored. <strong>Other</strong> is always kept as the last option and cannot be removed.</p>
+    <p style="margin-top:0.5rem;">Rejection reasons entered as free text during AI suggestion review are automatically added to the rejection reasons list for future use.</p>
+  </div>
+
+</div>
+
+<div id="help-no-results" style="display:none;" class="empty">No help topics match your search.</div>
+
+<script>
+  const input = document.getElementById('help-search');
+  const sections = document.querySelectorAll('.help-section');
+  const noResults = document.getElementById('help-no-results');
+
+  input.addEventListener('input', function () {
+    const term = this.value.toLowerCase().trim();
+    let visible = 0;
+    sections.forEach(function (section) {
+      const text = section.textContent.toLowerCase();
+      if (!term || text.includes(term)) {
+        section.style.display = '';
+        visible++;
+      } else {
+        section.style.display = 'none';
+      }
+    });
+    noResults.style.display = (term && visible === 0) ? '' : 'none';
+  });
+</script>
+{% endblock %}
