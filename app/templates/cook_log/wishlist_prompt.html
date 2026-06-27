@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Remove from Wishlist?{% endblock %}
+{% block content %}
+<div class="card" style="max-width:480px; margin:2rem auto; text-align:center;">
+  <h2 style="margin-bottom:0.5rem;">Great cook! 🎉</h2>
+  <p style="color:#444; margin-bottom:1.5rem;">
+    You made <strong>{{ recipe.name }}</strong>.<br>
+    Would you like to remove it from your wishlist?
+  </p>
+  <form method="post" action="/recipes/{{ recipe.id }}/wishlist-prompt">
+    <div style="display:flex; gap:1rem; justify-content:center;">
+      <button type="submit" name="action" value="yes" class="btn btn-primary">Yes, remove it</button>
+      <button type="submit" name="action" value="no" class="btn btn-secondary">No, keep it</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
