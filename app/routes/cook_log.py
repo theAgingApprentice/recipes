@@ -1,25 +1,47 @@
 """Cook log routes — add, edit, and delete cook log entries."""
-
 from datetime import date
-
 from flask import Blueprint, redirect, render_template, request
-
 from config.database import db
 from models.recipe import CookLog, Recipe
 
 cook_log_bp = Blueprint("cook_log", __name__)
 
+
 @cook_log_bp.route("/<int:recipe_id>/cook", methods=["POST"])
 def add(recipe_id):
-    """Create a new cook log entry dated today and redirect to the detail page."""
-    Recipe.query.get_or_404(recipe_id)
+    """Create a new cook log entry dated today.
+
+    If the recipe is on the wishlist, redirect to the un-flag prompt.
+    Otherwise redirect straight to the detail page.
+    """
+    recipe = Recipe.query.get_or_404(recipe_id)
     entry = CookLog(
         recipe_id=recipe_id,
         cooked_on=date.today(),
     )
     db.session.add(entry)
     db.session.commit()
+    if recipe.wishlist:
+        return redirect(f"/recipes/{recipe_id}/wishlist-prompt")
     return redirect(f"/recipes/{recipe_id}")
+
+
+@cook_log_bp.route("/<int:recipe_id>/wishlist-prompt", methods=["GET"])
+def wishlist_prompt(recipe_id):
+    """Ask whether to remove a just-cooked recipe from the wishlist."""
+    recipe = Recipe.query.get_or_404(recipe_id)
+    return render_template("cook_log/wishlist_prompt.html", recipe=recipe)
+
+
+@cook_log_bp.route("/<int:recipe_id>/wishlist-prompt", methods=["POST"])
+def wishlist_prompt_post(recipe_id):
+    """Handle the Yes/No response from the wishlist un-flag prompt."""
+    recipe = Recipe.query.get_or_404(recipe_id)
+    if request.form.get("action") == "yes":
+        recipe.wishlist = False
+        db.session.commit()
+    return redirect(f"/recipes/{recipe_id}")
+
 
 @cook_log_bp.route("/cook-log/<int:log_id>/edit", methods=["GET", "POST"])
 def edit(log_id):
@@ -33,6 +55,7 @@ def edit(log_id):
         db.session.commit()
         return redirect(f"/recipes/{entry.recipe_id}")
     return render_template("cook_log/edit.html", entry=entry)
+
 
 @cook_log_bp.route("/cook-log/<int:log_id>/delete", methods=["POST"])
 def delete(log_id):
