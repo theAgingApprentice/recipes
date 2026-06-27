@@ -24,6 +24,7 @@ class Recipe(db.Model):
     ingredients = db.relationship("Ingredient", backref="recipe", cascade="all, delete-orphan", order_by="Ingredient.sort_order")
     steps = db.relationship("Step", backref="recipe", cascade="all, delete-orphan", order_by="Step.step_number")
     cook_logs = db.relationship("CookLog", backref="recipe", cascade="all, delete-orphan", order_by="CookLog.cooked_on.desc()")
+    links = db.relationship("RecipeLink", foreign_keys="RecipeLink.recipe_id", cascade="all, delete-orphan")
 
 
 class Ingredient(db.Model):
@@ -70,6 +71,14 @@ class Cuisine(db.Model):
             case({"Other": 1}, value=Cuisine.name, else_=0),
             Cuisine.name
         ).all()
+
+
+class RecipeLink(db.Model):
+    __tablename__ = "recipe_links"
+    id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False)
+    linked_recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False)
+    linked_recipe = db.relationship("Recipe", foreign_keys=[linked_recipe_id])
 
 
 class DishType(db.Model):

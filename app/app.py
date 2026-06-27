@@ -29,6 +29,7 @@ def create_app():
     from routes.cook_log import cook_log_bp
     from routes.admin import admin_bp
     from routes.ai_plan import bp as ai_plan_bp
+    from routes.recipe_links import bp as recipe_links_bp
     app.register_blueprint(recipes_bp)
     app.register_blueprint(meal_plan_bp)
     app.register_blueprint(shopping_bp)
@@ -36,6 +37,7 @@ def create_app():
     app.register_blueprint(cook_log_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(ai_plan_bp)
+    app.register_blueprint(recipe_links_bp)
 
     @app.route("/api/health")
     def health():

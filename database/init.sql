@@ -121,3 +121,12 @@ CREATE TABLE IF NOT EXISTS ai_suggestions (
   FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL,
   FOREIGN KEY (rejection_reason_id) REFERENCES rejection_reasons(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS recipe_links (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipe_id INT NOT NULL,
+  linked_recipe_id INT NOT NULL,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  FOREIGN KEY (linked_recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_link (recipe_id, linked_recipe_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
