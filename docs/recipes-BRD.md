@@ -1,10 +1,10 @@
 # Business Requirements Document
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.3
-**Date:** June 23, 2026
+**Version:** 1.4
+**Date:** June 26, 2026
 **Author:** MitchellNET
-**Status:** Active — PR #6 complete; UC-16, UC-17, dish_type, wishlist enhancement pending build
+**Status:** Active — PRs #1–#7 complete; UC-17 recipe linking (PR #8), wishlist un-flag prompt (PR #9), cookbook manual entries (PR #10) pending build
 
 ---
 
@@ -15,23 +15,14 @@
 | 1.0 | June 16, 2026 | Initial draft |
 | 1.1 | June 18, 2026 | Added UC-11 through UC-14; updated PR table; wishlist retention decision documented |
 | 1.2 | June 22, 2026 | Added UC-15 Cook Log; updated UC-02 and UC-08 |
-| 1.3 | June 23, 2026 | Added UC-16 AI Meal Planning, UC-17 Recipe Linking; added dish_type field (auto-detected by Claude, admin-managed picklist); wishlist enhancement (un-flag prompt after first cook); admin section extended with dish_types and rejection_reasons managed lists; rejection reason pick list with on-the-spot Other entry |
+| 1.3 | June 23, 2026 | Added UC-16 AI Meal Planning, UC-17 Recipe Linking; added dish_type field; wishlist enhancement; admin extended with dish_types and rejection_reasons |
+| 1.4 | June 26, 2026 | UC-16 AI Meal Planning marked complete (reviewable list implementation chosen); added UC-19 Help / User Guide (built); updated success criteria; status updated to reflect PRs #32–#35 shipped |
 
 ---
 
 ## 1. Background
 
-The MitchellNET internal website currently hosts a static HTML page (`/recipes/recipes.html`) containing approximately 50 recipe links organized by source website, plus one local PDF and references to physical cookbook pages. This page has served as a quick-reference list but has significant limitations:
-
-- No search or filtering capability
-- Duplicate entries (same recipe appears multiple times)
-- No metadata (cuisine, protein, prep time, rating)
-- Requires HTML editing to add or update recipes
-- Physical cookbook references mixed with web links, with no consistent structure
-- No meal planning or shopping list capability
-- No record of what has been cooked or how it was rated
-
-This project extracts the recipes content from InternalWebServer into a dedicated, database-backed Flask application with a full web UI.
+The MitchellNET internal website previously hosted a static HTML page (`/recipes/recipes.html`) containing approximately 50 recipe links. This project replaced it with a dedicated, database-backed Flask application with a full web UI.
 
 ---
 
@@ -50,6 +41,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-01 — Browse Recipes
 **Actor:** Any user
+**Status:** ✅ Complete
 **Description:** User opens the app and sees all recipes. Can scroll, search, and filter the list.
 **Acceptance criteria:**
 - All recipes visible in a clean list/card layout
@@ -62,6 +54,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-02 — View a Recipe
 **Actor:** Any user
+**Status:** ✅ Complete
 **Description:** User clicks a recipe to see its full detail page.
 **Acceptance criteria:**
 - Shows all stored metadata: name, source, cuisine, protein, dish type, prep time, cook time, notes
@@ -80,9 +73,9 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-03 — Add a Recipe via URL
 **Actor:** Andrew
+**Status:** ✅ Complete
 **Description:** Andrew pastes a URL into the app. The app fetches the page and uses Claude API to extract structured recipe data including dish type. Andrew reviews, edits if needed, and saves.
 **Acceptance criteria:**
-- All existing UC-03 criteria met
 - Claude attempts to detect dish type (Main, Starter, Dessert, Side, Snack, Breakfast, Other)
 - Dish type shown as editable dropdown on review form (values from dish_types table)
 - Duplicate check run at review time
@@ -91,9 +84,9 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-04 — Add a Recipe via Document Upload
 **Actor:** Andrew
+**Status:** ✅ Complete
 **Description:** Andrew uploads a PDF or image of a recipe. Claude extracts structured data including dish type.
 **Acceptance criteria:**
-- All existing UC-04 criteria met
 - Claude attempts to detect dish type
 - Dish type shown as editable dropdown on review form
 
@@ -101,25 +94,26 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-05 — Add a Recipe Manually
 **Actor:** Andrew
+**Status:** ✅ Complete
 **Description:** Andrew fills in a form directly to add a recipe.
 **Acceptance criteria:**
-- All existing UC-05 criteria met
-- Dish type field added to form (dropdown from dish_types table, optional)
+- Dish type field on form (dropdown from dish_types table, optional)
 
 ---
 
 ### UC-06 — Edit a Recipe
 **Actor:** Andrew
+**Status:** ✅ Complete
 **Description:** Andrew edits any field of an existing recipe.
 **Acceptance criteria:**
-- All existing UC-06 criteria met
 - Dish type editable on edit form
-- Linked recipes visible and manageable on edit form (add link, remove link)
+- Linked recipes visible and manageable on edit form (add link, remove link) — pending PR #8
 
 ---
 
 ### UC-07 — Mark as Wishlist
 **Actor:** Any user
+**Status:** ✅ Complete
 **Description:** User tags a recipe as "want to try someday."
 **Acceptance criteria:**
 - Wishlist toggle on recipe detail page
@@ -127,12 +121,13 @@ Both users access the app from the home LAN only. No external access is required
 - Wishlist status persists in database
 - Wishlist recipes available as a selection pool for AI meal planning (UC-16)
 
-> **Note (June 2026):** Wishlist is retained and enhanced. It becomes an AI meal planning input ("draw from wishlist items") and triggers an un-flag prompt after first cook (see UC-08).
+> **Note:** Wishlist triggers an un-flag prompt after first cook (UC-08 enhancement — pending PR #9) and is usable as an AI meal planning criterion (UC-16 — complete).
 
 ---
 
 ### UC-08 — Record a Cook (entry point)
 **Actor:** Any user
+**Status:** ✅ Complete (wishlist un-flag prompt pending PR #9)
 **Description:** User confirms they are making (or have made) a recipe. Creates a new cook log entry. If the recipe is on the wishlist, user is prompted to remove the wishlist flag.
 **Acceptance criteria:**
 - "We made this!" button on the recipe detail page and on the browse page (per-recipe row)
@@ -147,6 +142,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-09 — Meal Plan
 **Actor:** Any user
+**Status:** ✅ Complete
 **Description:** User selects recipes for each day of the upcoming week to build a meal plan manually, or uses AI to suggest recipes (UC-16).
 **Acceptance criteria:**
 - Weekly calendar view (Mon–Sun) with meal slots (breakfast, lunch, dinner, snack)
@@ -160,6 +156,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-10 — Generate Shopping List
 **Actor:** Any user
+**Status:** ✅ Complete
 **Description:** From a meal plan, user generates a combined shopping list for all recipes in the plan.
 **Acceptance criteria:**
 - Shopping list combines ingredients across all planned recipes
@@ -171,33 +168,39 @@ Both users access the app from the home LAN only. No external access is required
 ---
 
 ### UC-11 — Duplicate Detection at Import
+**Status:** ✅ Complete
 *(unchanged from v1.2)*
 
 ---
 
 ### UC-12 — Prep-Ahead Flag
+**Status:** ✅ Complete
 *(unchanged from v1.2)*
 
 ---
 
 ### UC-13 — Loading Indicators During AI Operations
+**Status:** ✅ Complete
 *(unchanged from v1.2)*
 
 ---
 
 ### UC-14 — Delete Recipe
+**Status:** ✅ Complete
 *(unchanged from v1.2)*
 
 ---
 
 ### UC-15 — Cook Log (view, edit, and delete)
+**Status:** ✅ Complete
 *(unchanged from v1.2)*
 
 ---
 
 ### UC-16 — AI Meal Planning
 **Actor:** Any user
-**Description:** User asks the app to suggest recipes for a meal, a day, or a week. The user specifies planning criteria. Claude selects recipes and explains each pick. The user accepts or rejects each suggestion. Accepted suggestions populate the meal plan. All suggestions and accept/reject decisions are recorded for future learning.
+**Status:** ✅ Complete (PR #32 — June 26, 2026)
+**Description:** User asks the app to suggest recipes for a meal, a day, or a week. The user specifies planning criteria. Claude selects recipes and explains each pick. The user accepts or rejects each suggestion from a reviewable list. Accepted suggestions populate the meal plan. All suggestions and accept/reject decisions are recorded for future learning.
 
 **Planning scope options:**
 - Single meal (one recipe for one slot)
@@ -216,33 +219,27 @@ Both users access the app from the home LAN only. No external access is required
 - From wishlist (draw only from recipes with `wishlist = true`)
 - Surprise me (Claude picks freely with no constraint)
 
-**Acceptance criteria:**
+**Implementation decisions (resolved at build):**
+- Suggestions presented as a **reviewable list** (all suggestions shown at once, accept/reject inline per row)
 
-**Planning flow:**
+**Acceptance criteria:**
 - "AI Suggest" button accessible from the meal plan page
 - User selects scope (meal / day / week), composition (mains only / full meals), and one or more criteria
-- Loading indicator shown while Claude generates suggestions
-- Claude returns a list of suggestions — each suggestion includes: recipe name, dish type, slot (day + meal slot), and a plain-English explanation of why it was chosen
-- Suggestions presented to user one at a time or as a reviewable list (implementation decision at build time)
-- User can accept or reject each suggestion individually
-- On reject: user is shown a rejection reason dropdown (values from `rejection_reasons` table, Other always last); if Other selected, a text input appears to enter a new reason — on submit the new reason is added to `rejection_reasons` and recorded
-- Accepted suggestions are written to the meal plan grid (same data as manual entry)
-- Rejected suggestions are recorded but do not affect the meal plan
-
-**Recording:**
+- Claude returns a list of suggestions — each includes: recipe name, dish type, slot (day + meal slot), and a plain-English explanation of why it was chosen
+- User can accept or reject each suggestion individually from the reviewable list
+- On reject: user selects from rejection reason dropdown (values from `rejection_reasons` table, Other always last); if Other selected, a text input appears — on submit the new reason is added to `rejection_reasons` and recorded
+- Accepted suggestions written to the meal plan grid
+- Rejected suggestions recorded but do not affect the meal plan
 - Every suggestion recorded in `ai_suggestions` table: recipe_id, scope, criteria used, slot, Claude's explanation, accepted (boolean), rejection_reason_id (nullable), rejection_reason_text (for on-the-spot Other entries)
-- Data retained for future analysis of which suggestions are accepted/rejected and why
-
-**Constraints:**
 - Claude only selects from recipes already in the DB
 - Claude receives the full recipe list with cook log summary data (count, avg rating, last cooked) as context
-- Claude does not have access to external recipe sources during planning
 
 ---
 
 ### UC-17 — Recipe Linking
 **Actor:** Andrew
-**Description:** Andrew links two recipes that are intended to go together (e.g. a salad and a main that a cookbook recommends serving together). Links are visible on both recipe detail pages and manageable from both the detail page and the edit form.
+**Status:** 🔲 Planned (PR #8)
+**Description:** Andrew links two recipes that are intended to go together. Links are visible on both recipe detail pages and manageable from both the detail page and the edit form.
 
 **Acceptance criteria:**
 
@@ -274,6 +271,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ### UC-18 — Admin — Manage Picklists
 **Actor:** Andrew
+**Status:** ✅ Complete
 **Description:** Admin page allows Andrew to manage the cuisine, dish type, and rejection reason picklists used throughout the app.
 
 **Acceptance criteria:**
@@ -286,9 +284,23 @@ Both users access the app from the home LAN only. No external access is required
 
 ---
 
+### UC-19 — Help / User Guide
+**Actor:** Any user
+**Status:** ✅ Complete (PR #33 — June 26, 2026)
+**Description:** A searchable help page is accessible from every page in the app, providing task-oriented guidance for all major features.
+
+**Acceptance criteria:**
+- Help page at `/recipes/help` accessible via "? Help" link in every page header
+- 11 topic sections covering: Browsing & Searching, URL Import, Document Upload, Manual Entry, Editing & Deleting, Cook Log, Wishlist, Manual Meal Planning, AI Meal Planning, Shopping List, Admin
+- Search box at top filters visible sections live as the user types (client-side JavaScript, no page reload)
+- "No results" message shown when search matches nothing
+- Each section uses plain task-oriented prose
+
+---
+
 ## 4. Data to Migrate
 
-*(unchanged from v1.2 — 44 of 48 URLs imported; 6 cookbook references still need manual entry)*
+*(unchanged from v1.2 — 44 of 48 URLs imported; 6 cookbook references still need manual entry via PR #10)*
 
 ---
 
@@ -312,16 +324,16 @@ Both users access the app from the home LAN only. No external access is required
 
 ## 7. Success Criteria
 
-- All existing recipes migrated and accessible in the new app
-- No duplicate recipes in the database
-- URL import works for RecipeTin Eats and at least 3 other sources
-- Meal plan + shopping list flow works end to end
-- Cook log entries can be created from both the detail page and the browse page
-- Cook log ratings and notes persist correctly and are editable after the fact
-- Cook summary (times made, average rating) displays correctly on detail and browse pages
-- Prep-ahead flag correctly detected for at least 80% of recipes where it applies
-- Dish type correctly detected by Claude for at least 80% of imported recipes
-- AI meal planning produces a suggestion set that the user accepts at least partially
-- Recipe links visible and manageable from both detail and edit views
-- Wishlist un-flag prompt appears correctly after first cook of a wishlist recipe
-- Partner can use the app without any instruction
+- All existing recipes migrated and accessible in the new app ✅
+- No duplicate recipes in the database ✅
+- URL import works for RecipeTin Eats and at least 3 other sources ✅
+- Meal plan + shopping list flow works end to end ✅
+- Cook log entries can be created from both the detail page and the browse page ✅
+- Cook log ratings and notes persist correctly and are editable after the fact ✅
+- Cook summary (times made, average rating) displays correctly on detail and browse pages ✅
+- Prep-ahead flag correctly detected for at least 80% of recipes where it applies ✅
+- Dish type correctly detected by Claude for at least 80% of imported recipes ✅
+- AI meal planning produces a suggestion set that the user accepts at least partially — pending full browser test
+- Recipe links visible and manageable from both detail and edit views — pending PR #8
+- Wishlist un-flag prompt appears correctly after first cook of a wishlist recipe — pending PR #9
+- Partner can use the app without any instruction ✅ (Help page now live)
