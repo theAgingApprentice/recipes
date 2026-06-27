@@ -1,10 +1,10 @@
 # Business Requirements Document
 ## MitchellNET Recipes App (Item 15)
 
-**Version:** 1.4
-**Date:** June 26, 2026
+**Version:** 1.5
+**Date:** June 27, 2026
 **Author:** MitchellNET
-**Status:** Active — PRs #1–#7 complete; UC-17 recipe linking (PR #8), wishlist un-flag prompt (PR #9), cookbook manual entries (PR #10) pending build
+**Status:** Active — PRs #1–#9 complete; cookbook manual entries (PR #10) pending build
 
 ---
 
@@ -16,7 +16,8 @@
 | 1.1 | June 18, 2026 | Added UC-11 through UC-14; updated PR table; wishlist retention decision documented |
 | 1.2 | June 22, 2026 | Added UC-15 Cook Log; updated UC-02 and UC-08 |
 | 1.3 | June 23, 2026 | Added UC-16 AI Meal Planning, UC-17 Recipe Linking; added dish_type field; wishlist enhancement; admin extended with dish_types and rejection_reasons |
-| 1.4 | June 26, 2026 | UC-16 AI Meal Planning marked complete (reviewable list implementation chosen); added UC-19 Help / User Guide (built); updated success criteria; status updated to reflect PRs #32–#35 shipped |
+| 1.4 | June 26, 2026 | UC-16 AI Meal Planning marked complete; added UC-19 Help / User Guide; updated success criteria; PRs #32–#35 shipped |
+| 1.5 | June 27, 2026 | UC-17 Recipe Linking marked complete (PR #8 — recipe_links table, RecipeLink model, bidirectional linked recipes card on detail page); UC-08 wishlist un-flag prompt marked complete (PR #9); success criteria updated |
 
 ---
 
@@ -67,7 +68,7 @@ Both users access the app from the home LAN only. No external access is required
 - Shows wishlist status with toggle
 - Shows prep-ahead flag with manual override toggle
 - Shows dish type
-- Shows linked recipes (if any) with link type notes
+- Shows linked recipes (if any) with clickable links to their detail pages
 
 ---
 
@@ -107,7 +108,6 @@ Both users access the app from the home LAN only. No external access is required
 **Description:** Andrew edits any field of an existing recipe.
 **Acceptance criteria:**
 - Dish type editable on edit form
-- Linked recipes visible and manageable on edit form (add link, remove link) — pending PR #8
 
 ---
 
@@ -121,19 +121,17 @@ Both users access the app from the home LAN only. No external access is required
 - Wishlist status persists in database
 - Wishlist recipes available as a selection pool for AI meal planning (UC-16)
 
-> **Note:** Wishlist triggers an un-flag prompt after first cook (UC-08 enhancement — pending PR #9) and is usable as an AI meal planning criterion (UC-16 — complete).
-
 ---
 
 ### UC-08 — Record a Cook (entry point)
 **Actor:** Any user
-**Status:** ✅ Complete (wishlist un-flag prompt pending PR #9)
+**Status:** ✅ Complete (PR #9 — June 27, 2026)
 **Description:** User confirms they are making (or have made) a recipe. Creates a new cook log entry. If the recipe is on the wishlist, user is prompted to remove the wishlist flag.
 **Acceptance criteria:**
 - "We made this!" button on the recipe detail page and on the browse page (per-recipe row)
 - Pressing the button creates a new cook log entry with `cooked_on` defaulting to today
 - No rating or notes required at this point
-- If the recipe has `wishlist = true`, user is shown a prompt: "This was on your wishlist — mark it as made and remove from wishlist?" with Yes / No options
+- If the recipe has `wishlist = true`, user is shown a prompt: "You made [recipe] — remove it from your wishlist?" with Yes / No options
 - If Yes: `wishlist` set to false, entry saved, user returned to detail page
 - If No: entry saved with wishlist flag unchanged, user returned to detail page
 - Cook log summary updates immediately
@@ -219,53 +217,42 @@ Both users access the app from the home LAN only. No external access is required
 - From wishlist (draw only from recipes with `wishlist = true`)
 - Surprise me (Claude picks freely with no constraint)
 
-**Implementation decisions (resolved at build):**
-- Suggestions presented as a **reviewable list** (all suggestions shown at once, accept/reject inline per row)
-
 **Acceptance criteria:**
 - "AI Suggest" button accessible from the meal plan page
-- User selects scope (meal / day / week), composition (mains only / full meals), and one or more criteria
-- Claude returns a list of suggestions — each includes: recipe name, dish type, slot (day + meal slot), and a plain-English explanation of why it was chosen
-- User can accept or reject each suggestion individually from the reviewable list
-- On reject: user selects from rejection reason dropdown (values from `rejection_reasons` table, Other always last); if Other selected, a text input appears — on submit the new reason is added to `rejection_reasons` and recorded
+- User selects scope, composition, and one or more criteria
+- Claude returns a list of suggestions — each includes: recipe name, dish type, slot, and a plain-English explanation
+- User can accept or reject each suggestion individually
+- On reject: user selects from rejection reason dropdown; if Other selected, text input appears and new reason added to `rejection_reasons`
 - Accepted suggestions written to the meal plan grid
-- Rejected suggestions recorded but do not affect the meal plan
-- Every suggestion recorded in `ai_suggestions` table: recipe_id, scope, criteria used, slot, Claude's explanation, accepted (boolean), rejection_reason_id (nullable), rejection_reason_text (for on-the-spot Other entries)
-- Claude only selects from recipes already in the DB
-- Claude receives the full recipe list with cook log summary data (count, avg rating, last cooked) as context
+- Every suggestion recorded in `ai_suggestions` table
 
 ---
 
 ### UC-17 — Recipe Linking
 **Actor:** Andrew
-**Status:** 🔲 Planned (PR #8)
-**Description:** Andrew links two recipes that are intended to go together. Links are visible on both recipe detail pages and manageable from both the detail page and the edit form.
+**Status:** ✅ Complete (PR #8 — June 27, 2026)
+**Description:** Andrew links two recipes that are intended to go together. Links are visible on both recipe detail pages and manageable from the detail page.
 
 **Acceptance criteria:**
 
 **Viewing links:**
-- Recipe detail page shows a "Goes well with" section listing all linked recipes
-- Each linked recipe shows: name, dish type, and link notes (e.g. "Nagi cookbook p.42 — serve together")
-- Linked recipe name is a clickable link to its detail page
+- Recipe detail page shows a "Linked Recipes" section listing all linked recipes
+- Each linked recipe name is a clickable link to its detail page
+- "No linked recipes yet" shown when none exist
 
 **Adding links (detail page):**
-- "Link a recipe" button on the detail page opens an inline form
-- Form has: recipe search/dropdown (all recipes except current), optional notes field
-- On save: link created, detail page reloads showing the new link
-
-**Adding links (edit form):**
-- "Linked recipes" section on the edit form
-- Shows existing links with remove button per link
-- "Add link" inline form: recipe dropdown + notes field
+- Dropdown of all recipes (excluding current recipe) with a Link button
+- On save: link created bidirectionally, list reloads without page refresh
 
 **Removing links:**
-- Remove button per link on both detail page and edit form
+- Remove button per link on detail page
 - Confirmation required (browser confirm dialog)
-- Links are bidirectional — removing from either side removes the link
+- Removing a link removes it from both sides (bidirectional)
 
 **Bidirectionality:**
-- `recipe_links` table stores one row per link (recipe_id, linked_recipe_id) — queries check both directions
-- No duplicate links (A→B and B→A not both stored; one row covers both directions)
+- `recipe_links` table stores two rows per link pair (A→B and B→A)
+- UNIQUE constraint on `(recipe_id, linked_recipe_id)` prevents duplicates
+- Removing one link removes both rows
 
 ---
 
@@ -291,7 +278,7 @@ Both users access the app from the home LAN only. No external access is required
 
 **Acceptance criteria:**
 - Help page at `/recipes/help` accessible via "? Help" link in every page header
-- 11 topic sections covering: Browsing & Searching, URL Import, Document Upload, Manual Entry, Editing & Deleting, Cook Log, Wishlist, Manual Meal Planning, AI Meal Planning, Shopping List, Admin
+- 11 topic sections covering all major features
 - Search box at top filters visible sections live as the user types (client-side JavaScript, no page reload)
 - "No results" message shown when search matches nothing
 - Each section uses plain task-oriented prose
@@ -300,7 +287,7 @@ Both users access the app from the home LAN only. No external access is required
 
 ## 4. Data to Migrate
 
-*(unchanged from v1.2 — 44 of 48 URLs imported; 6 cookbook references still need manual entry via PR #10)*
+*(unchanged — 44 of 48 URLs imported; 6 cookbook references still need manual entry via PR #10)*
 
 ---
 
@@ -318,7 +305,7 @@ Both users access the app from the home LAN only. No external access is required
 - Integration with grocery delivery services
 - Mobile app (browser on phone over LAN is sufficient)
 - Recipe sharing or social features
-- Recipe-level aggregate rating derived from CookLog (deferred — see UC-07 note)
+- Recipe-level aggregate rating derived from CookLog (deferred — pending CookLog usage review)
 
 ---
 
@@ -334,6 +321,6 @@ Both users access the app from the home LAN only. No external access is required
 - Prep-ahead flag correctly detected for at least 80% of recipes where it applies ✅
 - Dish type correctly detected by Claude for at least 80% of imported recipes ✅
 - AI meal planning produces a suggestion set that the user accepts at least partially — pending full browser test
-- Recipe links visible and manageable from both detail and edit views — pending PR #8
-- Wishlist un-flag prompt appears correctly after first cook of a wishlist recipe — pending PR #9
-- Partner can use the app without any instruction ✅ (Help page now live)
+- Recipe links visible and manageable from detail page ✅
+- Wishlist un-flag prompt appears correctly after cooking a wishlist recipe ✅
+- Partner can use the app without any instruction ✅ (Help page live)
