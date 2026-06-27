@@ -69,6 +69,11 @@ def edit(recipe_id):
     return render_template("recipes/form.html", recipe=r, cuisines=Cuisine.ordered(), dish_types=DishType.ordered(), proteins=PROTEINS)
 
 
+@recipes_bp.route("/help")
+def help():
+    return render_template("recipes/help.html")
+
+
 @recipes_bp.route("/<int:recipe_id>/delete", methods=["POST"])
 def delete(recipe_id):
     r = Recipe.query.get_or_404(recipe_id)
