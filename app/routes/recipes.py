@@ -36,7 +36,8 @@ def browse():
 @recipes_bp.route("/<int:recipe_id>")
 def detail(recipe_id):
     r = Recipe.query.get_or_404(recipe_id)
-    return render_template("recipes/detail.html", recipe=r)
+    all_recipes = Recipe.query.order_by(Recipe.name).all()
+    return render_template("recipes/detail.html", recipe=r, all_recipes=all_recipes)
 
 
 @recipes_bp.route("/add", methods=["GET", "POST"])

@@ -105,5 +105,63 @@
   {% endif %}
 </div>
 
+<div class="card" id="linked-recipes-card">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+    <h2 style="margin:0;">Linked Recipes</h2>
+  </div>
+  <div id="linked-list" style="margin-bottom:1rem;"></div>
+  <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+    <select id="link-select" style="flex:1; min-width:200px;">
+      <option value="">— select a recipe to link —</option>
+      {% for r in all_recipes %}
+      {% if r.id != recipe.id %}
+      <option value="{{ r.id }}">{{ r.name }}</option>
+      {% endif %}
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="addLink()">Link</button>
+  </div>
+</div>
+
 <a href="/recipes/" class="btn btn-secondary">← Back to recipes</a>
+
+<script>
+const RECIPE_ID = {{ recipe.id }};
+
+async function loadLinks() {
+  const res = await fetch(`/recipe-links/${RECIPE_ID}`);
+  const links = await res.json();
+  const el = document.getElementById("linked-list");
+  if (links.length === 0) {
+    el.innerHTML = '<p style="color:#888; font-size:0.9rem;">No linked recipes yet.</p>';
+    return;
+  }
+  el.innerHTML = links.map(lk => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0; border-bottom:1px solid #eee;">
+      <a href="/recipes/${lk.id}">${lk.name}</a>
+      <button class="btn btn-danger btn-sm" onclick="deleteLink(${lk.link_id})">Remove</button>
+    </div>`).join("");
+}
+
+async function addLink() {
+  const sel = document.getElementById("link-select");
+  const linked_recipe_id = parseInt(sel.value);
+  if (!linked_recipe_id) return;
+  await fetch("/recipe-links/", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({recipe_id: RECIPE_ID, linked_recipe_id})
+  });
+  sel.value = "";
+  loadLinks();
+}
+
+async function deleteLink(linkId) {
+  if (!confirm("Remove this link?")) return;
+  await fetch(`/recipe-links/${linkId}/delete`, {method: "POST"});
+  loadLinks();
+}
+
+loadLinks();
+</script>
 {% endblock %}
