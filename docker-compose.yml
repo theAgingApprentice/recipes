@@ -17,6 +17,7 @@ services:
   recipes-db:
     image: mariadb:11
     container_name: recipes-db
+    init: true
     restart: unless-stopped
     env_file:
       - .env
